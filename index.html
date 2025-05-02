@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monad Echo Awards</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init("RVfNlpO4SHX8sdxMn");
+        })();
+    </script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="site-title">Monad Echo Awards</div>
+            <div class="logo">
+                <a href="index.html">
+                    <img src="logo.png" alt="Monad Echo Awards Logo">
+                </a>
+            </div>
+            <div class="nav-links">
+                <a href="gallery.html">What is Monad Echo Awards?</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h2>Monad Echo Awards</h2>
+            <p>The most prestigious* awards in Monad echo society!</p>
+            <small>*These awards don't honor hard work — they honor hard posting.</small>
+        </section>
+
+        <section class="intro-text">
+            <p>From selfie sorcerers to engagement magicians, from identity adventurers to thread philosophers, we celebrate the true art of echoing into the void and getting heard.</p>
+        </section>
+
+        <section id="categories" class="categories">
+            <h2 class="categories-title">Categories</h2>
+            <small>*Authenticity is optional. Virality is the goal.</small>
+            <div class="categories-grid">
+                <div class="award-card">
+                    <span class="category-emoji">🤳</span>
+                    <h2>SELFIE SORCERERS</h2>
+                    <p>Whose only content is selfies and who offers no ideas or interaction.</p>
+                </div>
+
+                <div class="award-card">
+                    <span class="category-emoji">👍</span>
+                    <h2>HYPE HITCHHIKERS</h2>
+                    <p>Who only attracts attention by jumping into popular topics later.</p>
+                </div>
+
+                <div class="award-card">
+                    <span class="category-emoji">🤖</span>
+                    <h2>AISHWASHERS</h2>
+                    <p>Those who just write prompts to AI and then present them as "my work".</p>
+                </div>
+
+                <div class="award-card">
+                    <span class="category-emoji">🐸</span>
+                    <h2>MEME MINERS</h2>
+                    <p>Those who steal other people's memes and present them as their own.</p>
+                </div>
+
+                <div class="award-card">
+                    <span class="category-emoji">🎣</span>
+                    <h2>BAIT LORDS</h2>
+                    <p>They don't post — they set traps.</p>
+                </div>
+
+                <div class="award-card">
+                    <span class="category-emoji">📥</span>
+                    <h2>DM DIPLOMATS</h2>
+                    <p>They move in silence — like real diplomats.</p>      
+                </div>
+
+                <div class="award-card">
+                    <span class="category-emoji">🌅</span>
+                    <h2>GMONAD BULLIES</h2>
+                    <p>If you've ever feared saying something slightly wrong because they might see it — congratulations, you've met a GMONAD Bully.</p>
+                </div>
+
+                <div class="award-card">
+                    <span class="category-emoji">🧛</span>
+                    <h2>VIRTUE VAMPIRES</h2>
+                    <p>They thrive in drama, surfacing only to suck engagement from every ethical debate.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Pop-up form yerine Google Form iframe -->
+    <div class="popup-overlay" id="formPopup">
+        <div class="popup-content">
+            <button class="close-popup">&times;</button>
+            <iframe src="YOUR_GOOGLE_FORM_URL" 
+                    width="100%" 
+                    height="600px" 
+                    frameborder="0" 
+                    marginheight="0" 
+                    marginwidth="0">
+                Loading...
+            </iframe>
+        </div>
+    </div>
+
+    <footer>
+        <div class="disclaimer">
+            <p>This is a satirical website created for entertainment purposes only. Any resemblance to real awards is purely coincidental and honestly quite concerning.</p>
+            <p>© 2025 Created by Kutsal with 🍆 and excessive amounts of coffee</p>
+        </div>
+    </footer>
+
+    <script>
+    // Pop-up işlemleri
+    function openNominatePopup(category) {
+        const popup = document.getElementById('nominatePopup');
+        const categorySpan = document.getElementById('selectedCategory');
+        const categoryInput = document.getElementById('categoryInput');
+        
+        categorySpan.textContent = category;
+        categoryInput.value = category;
+        popup.style.display = 'flex';
+    }
+
+    function closeNominatePopup() {
+        document.getElementById('nominatePopup').style.display = 'none';
+    }
+
+    // Close butonuna click event listener ekle
+    document.querySelector('.close-popup').addEventListener('click', closeNominatePopup);
+
+    // Her kategori için ayrı linkler tanımlayalım
+    const categoryLinks = {
+        'SELFIE SORCERERS': 'https://forms.gle/wtC6qFxAChmmyiSC6',
+        'HYPE HITCHHIKERS': 'https://forms.gle/mJDgXmSmzcqbRT5n6',
+        'AISHWASHERS': 'https://forms.gle/iSoh5hJPWcB73Aer9',
+        'MEME MINERS': 'https://forms.gle/okLXAjSixByJKn6HA',
+        'BAIT LORDS': 'https://forms.gle/3cNAwhNsxnLjhiYf7',
+        'DM DIPLOMATS': 'https://forms.gle/fScwCuAh2siitc1N9',
+        'GMONAD BULLIES': 'https://forms.gle/gBamwecpWPYFKRKw9',
+        'VIRTUE VAMPIRES': 'https://forms.gle/tyvNrFJQZ41CrLLt6'
+    };
+
+    // Award card'lara click event listener ekle
+    document.querySelectorAll('.award-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const category = card.querySelector('h2').textContent;
+            const formUrl = categoryLinks[category];
+            if (formUrl) {
+                window.location.href = formUrl;
+            }
+        });
+    });
+
+    // Pop-up dışına tıklandığında kapatma
+    document.querySelector('.popup-overlay').addEventListener('click', (e) => {
+        if (e.target.classList.contains('popup-overlay')) {
+            closeNominatePopup();
+        }
+    });
+
+    // Form submit işlemi
+    document.getElementById('nominationForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const submitButton = e.target.querySelector('.submit-button');
+        const buttonText = submitButton.querySelector('.button-text');
+        const buttonLoader = submitButton.querySelector('.button-loader');
+        
+        // Button loading state
+        submitButton.disabled = true;
+        buttonText.style.display = 'none';
+        buttonLoader.style.display = 'block';
+
+        try {
+            // EmailJS sendForm kullanarak gönderim
+            const response = await emailjs.sendForm(
+                'service_40qnijl',     // Yeni Service ID
+                'template_m219jzt',    // Yeni Template ID
+                e.target,              // Form elementinin kendisi
+                'RVfNlpO4SHX8sdxMn'   // Public Key
+            );
+
+            if (response.status === 200) {
+                alert('Nomination submitted successfully!');
+                closeNominatePopup();
+                e.target.reset();
+            } else {
+                throw new Error('Failed to submit nomination');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error submitting nomination. Please try again.');
+        } finally {
+            // Reset button state
+            submitButton.disabled = false;
+            buttonText.style.display = 'block';
+            buttonLoader.style.display = 'none';
+        }
+    });
+
+    // ESC tuşu ile kapatma
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeNominatePopup();
+        }
+    });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monad Echo Awards</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init("RVfNlpO4SHX8sdxMn");
+        })();
+    </script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="site-title">Monad Echo Awards</div>
+            <div class="logo">
+                <a href="index.html">
+                    <img src="logo.png" alt="Monad Echo Awards Logo">
+                </a>
+            </div>
+            <div class="nav-links">
+                <a href="gallery.html">What is Monad Echo Awards?</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="nominate-section">
+            <h1 class="page-title">Nominads</h1>
+            <p class="subtitle">Want to troll... err, I mean, honor someone?</p>
+            
+            <form class="nomination-form" id="nominationForm" onsubmit="return sendEmail(event)">
+                <div class="form-group">
+                    <label for="twitter-handle">Who are you? - You can be sure it stays between us.</label>
+                    <input type="text" id="twitter-handle" name="twitter-handle" required 
+                           placeholder="e.g., @username - X (Twitter) Handle">
+                </div>
+
+                <div class="form-group">
+                    <label for="category">In which category do you want to submit a nomination.</label>
+                    <select id="category" name="category" required>
+                        <option value="" disabled selected>Select a category</option>
+                        <option value="selfie">SELFIE SORCERERS</option>
+                        <option value="hype">HYPE HITCHHIKERS</option>
+                        <option value="ai">AISHWASHERS</option>
+                        <option value="meme">MEME MINERS</option>
+                        <option value="bait">BAIT LORDS</option>
+                        <option value="dm">DM DIPLOMATS</option>
+                        <option value="gm">GMONAD BULLIES</option>
+                        <option value="virtue">VIRTUE VAMPIRES</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">Why Your Canditate Deserve This Award? (Optional)</label>
+                    <textarea id="reason" name="reason" rows="4" 
+                              placeholder="Tell us why this nominee is special..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="twitter-canditate">Who is your Candidate for this category? - This won't stay between us.</label>
+                    <input type="text" id="twitter-canditate" name="twitter-canditate" required 
+                           placeholder="e.g., @username - X (Twitter) Handle">
+                </div>
+
+                <div class="form-group">
+                    <label for="post-url">X (Twitter) Post URL</label>
+                    <input type="url" id="url" name="url" 
+                           placeholder="https://twitter.com/username/status/..." required>
+                    <small>Please share the direct link to the nominated post</small>
+                </div>
+
+                <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY"></div>
+
+                <input type="hidden" name="subject" value="New Monad Echo Award Nomination">
+                <input type="hidden" name="format" value="text/plain">
+                <button type="submit" class="submit-button">
+                    <span class="button-text">Submit Nomination</span>
+                    <span class="button-loader" style="display: none;">Sending...</span>
+                </button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <div class="disclaimer">
+            <p>This is a satirical website created for entertainment purposes only. Any resemblance to real awards is purely coincidental and honestly quite concerning.</p>
+            <p>© 2025 Created by Kutsal with 🍆 and excessive amounts of coffee</p>
+        </div>
+    </footer>
+
+    <script>
+    function sendEmail(event) {
+        event.preventDefault();
+        
+        // Aynı kategoride daha önce oylama yapılıp yapılmadığını kontrol et
+        const nominatorHandle = document.getElementById('twitter-handle').value;
+        const category = document.getElementById('category').value;
+        const nominee = document.getElementById('twitter-canditate').value;
+        const nominationKey = `${nominatorHandle}_${category}_${nominee}`;
+        
+        // Local storage'dan önceki oylamaları kontrol et
+        const previousNominations = JSON.parse(localStorage.getItem('nominations') || '{}');
+        
+        // Son 12 saat içinde yapılan oylamayı kontrol et
+        const now = new Date().getTime();
+        if (previousNominations[nominationKey] && 
+            (now - previousNominations[nominationKey]) < 12 * 60 * 60 * 1000) {  // 12 saat
+            alert('You have already submitted a nomination for this category recently. Please wait 12 hours.');
+            return false;
+        }
+
+        // reCAPTCHA kontrolü
+        if (!validateCaptcha()) {
+            alert('Please complete the captcha verification');
+            return false;
+        }
+
+        // Submit butonunu loading durumuna geçir
+        const button = document.querySelector('.submit-button');
+        const buttonText = button.querySelector('.button-text');
+        const buttonLoader = button.querySelector('.button-loader');
+        buttonText.style.display = 'none';
+        buttonLoader.style.display = 'inline';
+        button.disabled = true;
+
+        const templateParams = {
+            twitter_handle: document.getElementById('twitter-handle').value,
+            category: document.getElementById('category').value,
+            reason: document.getElementById('reason').value,
+            post_url: document.getElementById('url').value,
+            twitter_candidate: document.getElementById('twitter-canditate').value
+        };
+
+        console.log('Sending email with params:', templateParams); // Debug için log
+
+        emailjs.send('service_40qnijl', 'template_m219jzt', templateParams)
+            .then(function(response) {
+                console.log('SUCCESS!', response.status, response.text);
+                alert('Nomination submitted successfully!');
+                document.getElementById('nominationForm').reset();
+            }, function(error) {
+                console.error('FAILED...', error);
+                alert('Failed to submit nomination. Error: ' + error.text);
+            })
+            .finally(() => {
+                buttonText.style.display = 'inline';
+                buttonLoader.style.display = 'none';
+                button.disabled = false;
+            });
+
+        // Başarılı gönderimden sonra local storage'a kaydet
+        previousNominations[nominationKey] = now;
+        localStorage.setItem('nominations', JSON.stringify(previousNominations));
+
+        return false;
+    }
+
+    // Captcha kontrolü için fonksiyon
+    function validateCaptcha() {
+        // reCAPTCHA response kontrolü
+        return true; // reCAPTCHA entegrasyonu sonrası değişecek
+    }
+    </script>
+</body>
+</html> 
