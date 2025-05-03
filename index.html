@@ -22,7 +22,7 @@
                 </a>
             </div>
             <div class="nav-links">
-                <a href="gallery.html">What is Monad Echo Awards?</a>
+                <a href="faq.html">What is <span class="highlight">Monad Eco Awards</span>?</a>
             </div>
         </nav>
     </header>
@@ -43,51 +43,83 @@
             <small>*Authenticity is optional. Virality is the goal.</small>
             <div class="categories-grid">
                 <div class="award-card">
-                    <span class="category-emoji">🤳</span>
                     <h2>SELFIE SORCERERS</h2>
+                    <img src="images/selfie-sorcerers.png" alt="Selfie Sorcerers" class="award-image">
                     <p>Whose only content is selfies and who offers no ideas or interaction.</p>
+                    <button class="nominate-button" data-category="SELFIE SORCERERS">
+                        <span class="button-icon">&gt;</span>
+                        <span class="button-text">Nominads</span>
+                    </button>
                 </div>
 
                 <div class="award-card">
-                    <span class="category-emoji">👍</span>
                     <h2>HYPE HITCHHIKERS</h2>
+                    <img src="images/hype-hitchhikers.png" alt="Hype Hitchhikers" class="award-image">
                     <p>Who only attracts attention by jumping into popular topics later.</p>
+                    <button class="nominate-button" data-category="HYPE HITCHHIKERS">
+                        <span class="button-icon">&gt;</span>
+                        <span class="button-text">Nominads</span>
+                    </button>
                 </div>
 
                 <div class="award-card">
-                    <span class="category-emoji">🤖</span>
                     <h2>AISHWASHERS</h2>
+                    <img src="images/aishwashers.png" alt="Aishwashers" class="award-image" style="margin-top:1.4rem;">
                     <p>Those who just write prompts to AI and then present them as "my work".</p>
+                    <button class="nominate-button" data-category="AISHWASHERS">
+                        <span class="button-icon">&gt;</span>
+                        <span class="button-text">Nominads</span>
+                    </button>
                 </div>
 
                 <div class="award-card">
-                    <span class="category-emoji">🐸</span>
                     <h2>MEME MINERS</h2>
+                    <img src="images/meme-miners.png" alt="Meme Miners" class="award-image" style="margin-top:1.4rem;">
                     <p>Those who steal other people's memes and present them as their own.</p>
+                    <button class="nominate-button" data-category="MEME MINERS">
+                        <span class="button-icon">&gt;</span>
+                        <span class="button-text">Nominads</span>
+                    </button>
                 </div>
 
                 <div class="award-card">
-                    <span class="category-emoji">🎣</span>
                     <h2>BAIT LORDS</h2>
+                    <img src="images/bait-lords.png" alt="Bait Lords" class="award-image">
                     <p>They don't post — they set traps.</p>
+                    <button class="nominate-button" data-category="BAIT LORDS">
+                        <span class="button-icon">&gt;</span>
+                        <span class="button-text">Nominads</span>
+                    </button>
                 </div>
 
                 <div class="award-card">
-                    <span class="category-emoji">📥</span>
                     <h2>DM DIPLOMATS</h2>
+                    <img src="images/dm-diplomats.png" alt="DM Diplomats" class="award-image">
                     <p>They move in silence — like real diplomats.</p>      
+                    <button class="nominate-button" data-category="DM DIPLOMATS">
+                        <span class="button-icon">&gt;</span>
+                        <span class="button-text">Nominads</span>
+                    </button>
                 </div>
 
                 <div class="award-card">
-                    <span class="category-emoji">🌅</span>
-                    <h2>GMONAD BULLIES</h2>
-                    <p>If you've ever feared saying something slightly wrong because they might see it — congratulations, you've met a GMONAD Bully.</p>
+                    <h2>GYMONAD BULLIES</h2>
+                    <img src="images/gmonad-bullies.png" alt="GMONAD Bullies" class="award-image">
+                    <p>If you've ever feared saying something slightly wrong because they might see it — congratulations, you've met a GYMONAD Bully.</p>
+                    <button class="nominate-button" data-category="GMONAD BULLIES">
+                        <span class="button-icon">&gt;</span>
+                        <span class="button-text">Nominads</span>
+                    </button>
                 </div>
 
                 <div class="award-card">
-                    <span class="category-emoji">🧛</span>
                     <h2>VIRTUE VAMPIRES</h2>
+                    <img src="images/virtue-vampires.png" alt="Virtue Vampires" class="award-image">
                     <p>They thrive in drama, surfacing only to suck engagement from every ethical debate.</p>
+                    <button class="nominate-button" data-category="VIRTUE VAMPIRES">
+                        <span class="button-icon">&gt;</span>
+                        <span class="button-text">Nominads</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -109,6 +141,9 @@
     </div>
 
     <footer>
+        <div class="footer-logo-wrapper">
+            <img src="images/footerlogo.png" alt="Monad Echo Awards Logo" class="footer-logo">
+        </div>
         <div class="disclaimer">
             <p>This is a satirical website created for entertainment purposes only. Any resemblance to real awards is purely coincidental and honestly quite concerning.</p>
             <p>© 2025 Created by Kutsal with 🍆 and excessive amounts of coffee</p>
@@ -134,7 +169,7 @@
     // Close butonuna click event listener ekle
     document.querySelector('.close-popup').addEventListener('click', closeNominatePopup);
 
-    // Her kategori için ayrı linkler tanımlayalım
+    // Butonlara tıklanınca ilgili form açılsın
     const categoryLinks = {
         'SELFIE SORCERERS': 'https://forms.gle/wtC6qFxAChmmyiSC6',
         'HYPE HITCHHIKERS': 'https://forms.gle/mJDgXmSmzcqbRT5n6',
@@ -146,13 +181,13 @@
         'VIRTUE VAMPIRES': 'https://forms.gle/tyvNrFJQZ41CrLLt6'
     };
 
-    // Award card'lara click event listener ekle
-    document.querySelectorAll('.award-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const category = card.querySelector('h2').textContent;
+    document.querySelectorAll('.nominate-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const category = button.getAttribute('data-category');
             const formUrl = categoryLinks[category];
             if (formUrl) {
-                window.location.href = formUrl;
+                window.open(formUrl, '_blank');
             }
         });
     });
