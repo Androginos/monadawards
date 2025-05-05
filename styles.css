@@ -838,4 +838,26 @@ p, span, a, label, small {
     font-weight: bold;
     display: flex;
     align-items: center;
+}
+
+@media (max-width: 600px) {
+  footer {
+    grid-template-columns: 1fr;
+    padding: 0.7rem 0.5rem;
+    row-gap: 1rem;
+  }
+  .footer-logo-wrapper {
+    justify-content: center;
+    padding-left: 0;
+    margin-bottom: 0.5rem;
+  }
+  .footer-logo {
+    height: 64px;
+    margin: 0 auto;
+  }
+  .disclaimer {
+    font-size: 0.95rem;
+    padding: 0 0.5rem;
+    max-width: 100%;
+  }
 } 
