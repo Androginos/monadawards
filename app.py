@@ -60,6 +60,10 @@ def create_admin():
             db.session.add(admin)
             db.session.commit()
 
+@app.before_first_request
+def create_tables():
+    db.create_all()
+
 def standardize_twitter_handle(handle):
     """Twitter handle'ı standardize eder."""
     if not handle:
