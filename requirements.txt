@@ -2,4 +2,5 @@ Flask==2.0.1
 Flask-SQLAlchemy==2.5.1
 SQLAlchemy==2.0.28
 Werkzeug==2.3.7
-Flask-Limiter==2.4.0 
+Flask-Limiter==2.4.0
+gunicorn 
