@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monad Echo Awards</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
         (function() {
@@ -17,12 +17,12 @@
         <nav>
             <div class="site-title">Monad Echo Awards</div>
             <div class="logo">
-                <a href="index.html">
-                    <img src="logo.png" alt="Monad Echo Awards Logo">
+                <a href="#" onclick="window.location.reload(); return false;">
+                    <img src="/static/logo.png" alt="Monad Echo Awards Logo">
                 </a>
             </div>
             <div class="nav-links">
-                <a href="faq.html">What is <span class="highlight">Monad Eco Awards</span>?</a>
+                <a href="/faq">What is <span class="highlight">Monad Eco Awards</span>?</a>
             </div>
         </nav>
     </header>
@@ -44,7 +44,7 @@
             <div class="categories-grid">
                 <div class="award-card">
                     <h2>SELFIE SORCERERS</h2>
-                    <img src="images/selfie-sorcerers.png" alt="Selfie Sorcerers" class="award-image">
+                    <div class="award-image-wrapper"><img src="/static/images/selfie-sorcerers.png" alt="Selfie Sorcerers" class="award-image"></div>
                     <p>Whose only content is selfies and who offers no ideas or interaction.</p>
                     <button class="nominate-button" data-category="SELFIE SORCERERS">
                         <span class="button-icon">&gt;</span>
@@ -54,7 +54,7 @@
 
                 <div class="award-card">
                     <h2>HYPE HITCHHIKERS</h2>
-                    <img src="images/hype-hitchhikers.png" alt="Hype Hitchhikers" class="award-image">
+                    <div class="award-image-wrapper"><img src="/static/images/hype-hitchhikers.png" alt="Hype Hitchhikers" class="award-image"></div>
                     <p>Who only attracts attention by jumping into popular topics later.</p>
                     <button class="nominate-button" data-category="HYPE HITCHHIKERS">
                         <span class="button-icon">&gt;</span>
@@ -64,7 +64,7 @@
 
                 <div class="award-card">
                     <h2>AISHWASHERS</h2>
-                    <img src="images/aishwashers.png" alt="Aishwashers" class="award-image" style="margin-top:1.4rem;">
+                    <div class="award-image-wrapper"><img src="/static/images/aishwashers.png" alt="Aishwashers" class="award-image"></div>
                     <p>Those who just write prompts to AI and then present them as "my work".</p>
                     <button class="nominate-button" data-category="AISHWASHERS">
                         <span class="button-icon">&gt;</span>
@@ -74,7 +74,7 @@
 
                 <div class="award-card">
                     <h2>MEME MINERS</h2>
-                    <img src="images/meme-miners.png" alt="Meme Miners" class="award-image" style="margin-top:1.4rem;">
+                    <div class="award-image-wrapper"><img src="/static/images/meme-miners.png" alt="Meme Miners" class="award-image"></div>
                     <p>Those who steal other people's memes and present them as their own.</p>
                     <button class="nominate-button" data-category="MEME MINERS">
                         <span class="button-icon">&gt;</span>
@@ -84,7 +84,7 @@
 
                 <div class="award-card">
                     <h2>BAIT LORDS</h2>
-                    <img src="images/bait-lords.png" alt="Bait Lords" class="award-image">
+                    <img src="/static/images/bait-lords.png" alt="Bait Lords" class="award-image">
                     <p>They don't post — they set traps.</p>
                     <button class="nominate-button" data-category="BAIT LORDS">
                         <span class="button-icon">&gt;</span>
@@ -94,7 +94,7 @@
 
                 <div class="award-card">
                     <h2>DM DIPLOMATS</h2>
-                    <img src="images/dm-diplomats.png" alt="DM Diplomats" class="award-image">
+                    <img src="/static/images/dm-diplomats.png" alt="DM Diplomats" class="award-image">
                     <p>They move in silence — like real diplomats.</p>      
                     <button class="nominate-button" data-category="DM DIPLOMATS">
                         <span class="button-icon">&gt;</span>
@@ -104,7 +104,7 @@
 
                 <div class="award-card">
                     <h2>GYMONAD BULLIES</h2>
-                    <img src="images/gmonad-bullies.png" alt="GMONAD Bullies" class="award-image">
+                    <img src="/static/images/gmonad-bullies.png" alt="GMONAD Bullies" class="award-image">
                     <p>If you've ever feared saying something slightly wrong because they might see it — congratulations, you've met a GYMONAD Bully.</p>
                     <button class="nominate-button" data-category="GMONAD BULLIES">
                         <span class="button-icon">&gt;</span>
@@ -114,7 +114,7 @@
 
                 <div class="award-card">
                     <h2>VIRTUE VAMPIRES</h2>
-                    <img src="images/virtue-vampires.png" alt="Virtue Vampires" class="award-image">
+                    <img src="/static/images/virtue-vampires.png" alt="Virtue Vampires" class="award-image">
                     <p>They thrive in drama, surfacing only to suck engagement from every ethical debate.</p>
                     <button class="nominate-button" data-category="VIRTUE VAMPIRES">
                         <span class="button-icon">&gt;</span>
@@ -125,24 +125,56 @@
         </section>
     </main>
 
-    <!-- Pop-up form yerine Google Form iframe -->
-    <div class="popup-overlay" id="formPopup">
+    <!-- Pop-up form -->
+    <div class="popup-overlay" id="nominatePopup">
         <div class="popup-content">
             <button class="close-popup">&times;</button>
-            <iframe src="YOUR_GOOGLE_FORM_URL" 
-                    width="100%" 
-                    height="600px" 
-                    frameborder="0" 
-                    marginheight="0" 
-                    marginwidth="0">
-                Loading...
-            </iframe>
+            <form id="nominationForm" class="nomination-form">
+                <div class="form-group">
+                    <label for="category">Select Category</label>
+                    <select id="category" name="category" required disabled>
+                        <option value="">Select a category</option>
+                        <option value="SELFIE SORCERERS">SELFIE SORCERERS</option>
+                        <option value="HYPE HITCHHIKERS">HYPE HITCHHIKERS</option>
+                        <option value="AISHWASHERS">AISHWASHERS</option>
+                        <option value="MEME MINERS">MEME MINERS</option>
+                        <option value="BAIT LORDS">BAIT LORDS</option>
+                        <option value="DM DIPLOMATS">DM DIPLOMATS</option>
+                        <option value="GMONAD BULLIES">GMONAD BULLIES</option>
+                        <option value="VIRTUE VAMPIRES">VIRTUE VAMPIRES</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="twitterHandle">What is your twitter handle?</label>
+                    <input type="text" id="twitterHandle" name="twitterHandle" required placeholder="@username">
+                </div>
+                <div class="form-group">
+                    <label for="candidate">@ Username for this category</label>
+                    <input type="text" id="candidate" name="candidate" required placeholder="@username">
+                </div>
+                <div class="form-group">
+                    <label for="reason">Why Your Candidate Deserves This Award? (Optional)</label>
+                    <textarea id="reason" name="reason" rows="3" placeholder="Tell us why..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="twitterUrl">X (Twitter) Post URL</label>
+                    <input type="url" id="twitterUrl" name="twitterUrl" required placeholder="https://twitter.com/...">
+                </div>
+                <div class="form-group">
+                    <label for="monadAddress">Monad Address</label>
+                    <input type="text" id="monadAddress" name="monadAddress" required placeholder="0x...">
+                </div>
+                <button type="submit" class="submit-button">
+                    <span class="button-text">Submit Nomination</span>
+                    <span class="button-loader" style="display: none;">Loading...</span>
+                </button>
+            </form>
         </div>
     </div>
 
     <footer>
         <div class="footer-logo-wrapper">
-            <img src="images/footerlogo.png" alt="Monad Echo Awards Logo" class="footer-logo">
+            <img src="/static/images/footerlogo.png" alt="Monad Echo Awards Logo" class="footer-logo">
         </div>
         <div class="disclaimer">
             <p>This is a satirical website created for entertainment purposes only. Any resemblance to real awards is purely coincidental and honestly quite concerning.</p>
@@ -154,11 +186,11 @@
     // Pop-up işlemleri
     function openNominatePopup(category) {
         const popup = document.getElementById('nominatePopup');
-        const categorySpan = document.getElementById('selectedCategory');
-        const categoryInput = document.getElementById('categoryInput');
+        const categorySelect = document.getElementById('category');
         
-        categorySpan.textContent = category;
-        categoryInput.value = category;
+        // Seçilen kategoriyi dropdown'da seç
+        categorySelect.value = category;
+        
         popup.style.display = 'flex';
     }
 
@@ -169,26 +201,12 @@
     // Close butonuna click event listener ekle
     document.querySelector('.close-popup').addEventListener('click', closeNominatePopup);
 
-    // Butonlara tıklanınca ilgili form açılsın
-    const categoryLinks = {
-        'SELFIE SORCERERS': 'https://forms.gle/wtC6qFxAChmmyiSC6',
-        'HYPE HITCHHIKERS': 'https://forms.gle/mJDgXmSmzcqbRT5n6',
-        'AISHWASHERS': 'https://forms.gle/iSoh5hJPWcB73Aer9',
-        'MEME MINERS': 'https://forms.gle/okLXAjSixByJKn6HA',
-        'BAIT LORDS': 'https://forms.gle/3cNAwhNsxnLjhiYf7',
-        'DM DIPLOMATS': 'https://forms.gle/fScwCuAh2siitc1N9',
-        'GMONAD BULLIES': 'https://forms.gle/gBamwecpWPYFKRKw9',
-        'VIRTUE VAMPIRES': 'https://forms.gle/tyvNrFJQZ41CrLLt6'
-    };
-
+    // Butonlara tıklanınca popup açılsın
     document.querySelectorAll('.nominate-button').forEach(button => {
         button.addEventListener('click', (e) => {
             e.stopPropagation();
             const category = button.getAttribute('data-category');
-            const formUrl = categoryLinks[category];
-            if (formUrl) {
-                window.open(formUrl, '_blank');
-            }
+            openNominatePopup(category);
         });
     });
 
@@ -213,20 +231,31 @@
         buttonLoader.style.display = 'block';
 
         try {
-            // EmailJS sendForm kullanarak gönderim
-            const response = await emailjs.sendForm(
-                'service_40qnijl',     // Yeni Service ID
-                'template_m219jzt',    // Yeni Template ID
-                e.target,              // Form elementinin kendisi
-                'RVfNlpO4SHX8sdxMn'   // Public Key
-            );
+            const formData = {
+                category: document.getElementById('category').value,
+                twitter_handle: document.getElementById('twitterHandle').value,
+                candidate: document.getElementById('candidate').value,
+                reason: document.getElementById('reason').value,
+                twitter_url: document.getElementById('twitterUrl').value,
+                monad_address: document.getElementById('monadAddress').value
+            };
 
-            if (response.status === 200) {
+            const response = await fetch('/api/nominate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
                 alert('Nomination submitted successfully!');
                 closeNominatePopup();
                 e.target.reset();
             } else {
-                throw new Error('Failed to submit nomination');
+                throw new Error(data.message || 'Error submitting nomination');
             }
         } catch (error) {
             console.error('Error:', error);
@@ -244,6 +273,17 @@
         if (e.key === 'Escape') {
             closeNominatePopup();
         }
+    });
+
+    // Kategori butonuna tıklanınca formu aç ve kategori seçimini sabitle
+    const nominateButtons = document.querySelectorAll('.nominate-button');
+    nominateButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const category = btn.getAttribute('data-category');
+            document.getElementById('category').value = category;
+            document.getElementById('category').disabled = true;
+            document.getElementById('nominatePopup').style.display = 'flex';
+        });
     });
     </script>
 </body>

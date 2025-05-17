@@ -1,0 +1,62 @@
+function validateTwitterHandle(handle) {
+    if (!handle) return false;
+    handle = handle.trim();
+    // Birden fazla @ işareti kontrolü
+    if (handle.includes('@@')) return false;
+    // @ işareti ile başlamalı
+    if (!handle.startsWith('@')) return false;
+    // @ işaretinden sonra en az 1 karakter olmalı
+    if (handle.length <= 1) return false;
+    return true;
+}
+
+function validateForm() {
+    const twitterHandle = document.getElementById('twitter_handle').value;
+    const candidate = document.getElementById('candidate').value;
+    
+    if (!validateTwitterHandle(twitterHandle)) {
+        alert('Twitter handle must start with @ and be a valid username.');
+        return false;
+    }
+    
+    if (!validateTwitterHandle(candidate)) {
+        alert('Candidate Twitter handle must start with @ and be a valid username.');
+        return false;
+    }
+    
+    return true;
+}
+
+// Form submit işleyicisini güncelle
+document.getElementById('nominationForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+    
+    // ... existing form submission code ...
+});
+
+// Input alanlarına otomatik @ ekleme
+document.getElementById('twitter_handle').addEventListener('input', function(e) {
+    let value = e.target.value.trim();
+    if (value && !value.startsWith('@')) {
+        e.target.value = '@' + value;
+    }
+});
+
+document.getElementById('candidate').addEventListener('input', function(e) {
+    let value = e.target.value.trim();
+    if (value && !value.startsWith('@')) {
+        e.target.value = '@' + value;
+    }
+});
+
+// Kategori sabitleme fonksiyonu
+function setCategoryAndLock(category) {
+    const categorySelect = document.getElementById('category');
+    categorySelect.value = category;
+    categorySelect.disabled = true;
+}
+
+// Kategori sabitleme fonksiyonu kullanılacak şekilde export et
+window.setCategoryAndLock = setCategoryAndLock; 

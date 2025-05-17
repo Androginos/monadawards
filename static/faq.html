@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Monad Echo Awards</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="site-title">Monad Echo Awards</div>
+            <div class="logo">
+                <a href="/">
+                    <img src="/static/logo.png" alt="Monad Echo Awards Logo">
+                </a>
+            </div>
+            <div class="nav-links">
+                <a href="/faq">What is <span class="highlight">Monad Eco Awards</span>?</a>
+            </div>
+        </nav>
+    </header>
+
+    
+    <main class="faq-container">
+        <h1>What is Monad Echo Awards?</h1>
+        <p class="faq-intro-text">A satirical celebration of social excellence (or chaos) in the Monad ecosystem.</p>
+        
+        <h1>What do winners receive?</h1>
+        <p class="faq-intro-text">Each category has custom-designed NFTs for the 1st, 2nd, and 3rd place winners. Think of them as digital trophies, but with more sarcasm and fewer fingerprints.</p>
+        
+        <div class="faq-list">
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h2>Who can be nominated?</h2>
+                    <button class="toggle-btn">+</button>
+                </div>
+                <div class="faq-answer">
+                    <p>Anyone with a public X (formerly Twitter) account and a footprint in the Monad ecosystem. Yes, even you. Especially you.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h2>Can I nominate myself?</h2>
+                    <button class="toggle-btn">+</button>
+                </div>
+                <div class="faq-answer">
+                    <p>Absolutely! Self-awareness is the first step to winning a Monad Echo Award. Just remember, the more seriously you take it, the funnier it becomes.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h2>Is this supposed to be serious?</h2>
+                    <button class="toggle-btn">+</button>
+                </div>
+                <div class="faq-answer">
+                    <p>Absolutely not.</p>
+                    <p>It's satire, baby. This is a playful roast, not a personal attack. We punch with memes, not malice.</p>
+                    <p>If you're nominated, congrats — you made an impression.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h2>How are votes collected?</h2>
+                    <button class="toggle-btn">+</button>
+                </div>
+                <div class="faq-answer">
+                    <p>Via Google Forms — no KYC, no gas fees, no DAO drama. Just raw community opinions, one roast at a time.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h2>What if I win and I'm offended?</h2>
+                    <button class="toggle-btn">+</button>
+                </div>
+                <div class="faq-answer">
+                    <p>That's the spirit!</p>
+                    <p>The Monad Echo Awards are like roast battles: if you're being talked about, you're already winning.</p>
+                    <p>Take the NFT, hang it on your digital fridge, and enjoy the clout storm.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <h2>Who created this?</h2>
+                    <button class="toggle-btn">+</button>
+                </div>
+                <div class="faq-answer">
+                    <p>Some internet gremlins with too much time, a bit of design talent, and a deep love/hate relationship with crypto culture.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Feedback Button -->
+    <button id="feedbackBtn" class="feedback-btn">Do you have any comments, suggestions or feedback?</button>
+
+    <!-- Feedback Popup Form (modern, küçük, butona yakın) -->
+    <div id="feedbackPopup" class="feedback-popup">
+        <div class="feedback-popup-content">
+            <button class="close-feedback">&times;</button>
+            <h2>Contact Us</h2>
+            <form id="feedbackForm" class="feedback-form">
+                <div class="form-group">
+                    <label for="fb_name">Your Name</label>
+                    <input type="text" id="fb_name" name="name" required placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label for="fb_email">Your Email</label>
+                    <input type="email" id="fb_email" name="email" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="fb_message">Message</label>
+                    <textarea id="fb_message" name="message" required placeholder="Type your message here..." rows="4"></textarea>
+                </div>
+                <button type="submit" class="feedback-submit">Send Feedback</button>
+            </form>
+            <div id="feedbackFormMessage"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-logo-wrapper">
+            <img src="/static/images/footerlogo.png" alt="Monad Echo Awards Logo" class="footer-logo">
+        </div>
+        <div class="disclaimer">
+            <p>This is a satirical website created for entertainment purposes only. Any resemblance to real awards is purely coincidental and honestly quite concerning.</p>
+            <p>© 2025 Created by Kutsal with 🍆 and excessive amounts of coffee</p>
+        </div>
+    </footer>
+
+    <script>
+        // FAQ toggle functionality
+        document.querySelectorAll('.toggle-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const faqItem = button.closest('.faq-item');
+                const answer = faqItem.querySelector('.faq-answer');
+                
+                // Toggle answer visibility
+                answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
+                
+                // Toggle button text
+                button.textContent = button.textContent === '+' ? '−' : '+';
+            });
+        });
+
+        // Contact form submit
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(contactForm);
+                // Simüle cevap (backend yoksa)
+                setTimeout(() => {
+                    document.getElementById('formMessage').textContent = 'Thank you for reaching out! We will get back to you soon.';
+                    document.getElementById('formMessage').className = 'success';
+                    contactForm.reset();
+                }, 800);
+            });
+        }
+    </script>
+
+    <style>
+    body {
+        min-height: 100vh;
+        margin: 0;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: linear-gradient(135deg, #e0e3ff 0%, #e4e7ff 20%, #f6f8ff 40%, #f6f8ff 60%, #e4e7ff 80%, #e0e3ff 100%);
+    }
+    .contact-section {
+        max-width: 500px;
+        margin: 3rem auto 2rem auto;
+        background: rgba(255,255,255,0.95);
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(131,110,249,0.08);
+        padding: 2rem 2.5rem 2.5rem 2.5rem;
+    }
+    .contact-section h2 {
+        text-align: center;
+        color: #836EF9;
+        margin-bottom: 1.5rem;
+    }
+    .contact-form .form-group {
+        margin-bottom: 1.2rem;
+    }
+    .contact-form label {
+        display: block;
+        margin-bottom: 0.4rem;
+        font-weight: 500;
+        color: #333;
+    }
+    .contact-form input,
+    .contact-form textarea {
+        width: 100%;
+        padding: 0.7rem;
+        border: 1px solid #e0e7ff;
+        border-radius: 6px;
+        font-size: 1rem;
+        background: #f8fafc;
+        transition: border 0.2s;
+    }
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+        border: 1.5px solid #836EF9;
+        outline: none;
+    }
+    .contact-submit {
+        width: 100%;
+        background: linear-gradient(90deg, #836EF9 0%, #6B5AC9 100%);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 0.9rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 0.5rem;
+        transition: background 0.2s;
+    }
+    .contact-submit:hover {
+        background: linear-gradient(90deg, #6B5AC9 0%, #836EF9 100%);
+    }
+    #formMessage {
+        margin-top: 1rem;
+        text-align: center;
+        font-size: 1rem;
+    }
+    #formMessage.success {
+        color: #2ecc40;
+    }
+    #formMessage.error {
+        color: #dc3545;
+    }
+    .feedback-btn {
+        position: fixed;
+        right: 2.2rem;
+        bottom: 2.2rem;
+        z-index: 2000;
+        background: rgba(131,110,249,0.92);
+        color: #fff;
+        border: none;
+        border-radius: 30px;
+        padding: 0.7rem 1.5rem;
+        font-size: 0.98rem;
+        font-weight: 500;
+        box-shadow: 0 4px 24px rgba(131,110,249,0.12);
+        cursor: pointer;
+        transition: background 0.2s, box-shadow 0.2s, bottom 0.2s;
+        backdrop-filter: blur(6px);
+    }
+    .feedback-btn:hover {
+        background: rgba(107,90,201,0.97);
+        box-shadow: 0 8px 32px rgba(131,110,249,0.18);
+    }
+    .feedback-popup {
+        display: none;
+        position: fixed;
+        right: 2.2rem;
+        bottom: 6.5rem;
+        z-index: 3000;
+        width: 350px;
+        max-width: 95vw;
+        background: linear-gradient(135deg, rgba(224,227,255,0.98) 0%, rgba(228,231,255,0.98) 20%, rgba(246,248,255,0.98) 40%, rgba(246,248,255,0.98) 60%, rgba(228,231,255,0.98) 80%, rgba(224,227,255,0.98) 100%);
+        border-radius: 18px;
+        box-shadow: 0 8px 32px 0 rgba(131,110,249,0.18);
+        padding: 0;
+        animation: fadeInUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes fadeInUp {
+        from { transform: translateY(40px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .feedback-popup-content {
+        padding: 1.5rem 1.5rem 1.2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .feedback-popup-content h2 {
+        color: #836EF9;
+        text-align: center;
+        margin-bottom: 1.2rem;
+        font-size: 1.2rem;
+    }
+    .feedback-form .form-group {
+        margin-bottom: 1rem;
+        width: 100%;
+    }
+    .feedback-form label {
+        display: block;
+        margin-bottom: 0.3rem;
+        font-weight: 500;
+        color: #333;
+        font-size: 0.98rem;
+    }
+    .feedback-form input,
+    .feedback-form textarea {
+        width: 100%;
+        padding: 0.6rem;
+        border: 1px solid #e0e7ff;
+        border-radius: 6px;
+        font-size: 0.98rem;
+        background: #f8fafc;
+        transition: border 0.2s;
+    }
+    .feedback-form input:focus,
+    .feedback-form textarea:focus {
+        border: 1.5px solid #836EF9;
+        outline: none;
+    }
+    .feedback-submit {
+        width: 100%;
+        background: linear-gradient(90deg, #836EF9 0%, #6B5AC9 100%);
+        color: #fff;
+        border: none;
+        border-radius: 30px;
+        padding: 0.7rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 0.3rem;
+        transition: background 0.2s;
+    }
+    .feedback-submit:hover {
+        background: linear-gradient(90deg, #6B5AC9 0%, #836EF9 100%);
+    }
+    .close-feedback {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #836EF9;
+        cursor: pointer;
+        z-index: 10;
+    }
+    #feedbackFormMessage {
+        margin-top: 0.7rem;
+        text-align: center;
+        font-size: 0.98rem;
+    }
+    #feedbackFormMessage.success {
+        color: #2ecc40;
+    }
+    #feedbackFormMessage.error {
+        color: #dc3545;
+    }
+    @media (max-width: 600px) {
+        .feedback-slider, .feedback-slider-content {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+        }
+    }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+    (function() {
+        emailjs.init("RVfNlpO4SHX8sdxMn");
+    })();
+
+    // Footer ile çakışmayı önle (feedback butonu footer'a değmesin)
+    const feedbackBtn = document.getElementById('feedbackBtn');
+    const footer = document.querySelector('footer');
+    function adjustFeedbackBtn() {
+        if (!footer) return;
+        const footerRect = footer.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const btnHeight = feedbackBtn.offsetHeight;
+        // Eğer footer ekranda görünüyorsa ve butonla çakışıyorsa
+        if (footerRect.top < windowHeight - btnHeight - 32) {
+            feedbackBtn.style.bottom = (windowHeight - footerRect.top + 24) + 'px';
+        } else {
+            feedbackBtn.style.bottom = '2.2rem';
+        }
+    }
+    window.addEventListener('scroll', adjustFeedbackBtn);
+    window.addEventListener('resize', adjustFeedbackBtn);
+    adjustFeedbackBtn();
+
+    // Feedback popup aç/kapat
+    const feedbackPopup = document.getElementById('feedbackPopup');
+    const closeFeedback = document.querySelector('.close-feedback');
+    feedbackBtn.addEventListener('click', () => {
+        if (feedbackPopup.style.display === 'block') {
+            feedbackPopup.style.display = 'none';
+        } else {
+            feedbackPopup.style.display = 'block';
+        }
+    });
+    closeFeedback.addEventListener('click', () => {
+        feedbackPopup.style.display = 'none';
+    });
+    // Dışarı tıklayınca kapansın
+    feedbackPopup.addEventListener('click', (e) => {
+        if (e.target === feedbackPopup) {
+            feedbackPopup.style.display = 'none';
+        }
+    });
+    // ESC tuşuna basınca popup kapansın
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            feedbackPopup.style.display = 'none';
+        }
+    });
+    // Feedback form submit
+    const feedbackForm = document.getElementById('feedbackForm');
+    feedbackForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = {
+            name: document.getElementById('fb_name').value,
+            email: document.getElementById('fb_email').value,
+            message: document.getElementById('fb_message').value
+        };
+        emailjs.send("service_40qnijl", "template_m219jzt", {
+            from_name: formData.name,
+            from_email: formData.email,
+            message: formData.message
+        }).then(function() {
+            document.getElementById('feedbackFormMessage').textContent = 'Thank you for your feedback!';
+            document.getElementById('feedbackFormMessage').className = 'success';
+            feedbackForm.reset();
+        }, function(error) {
+            document.getElementById('feedbackFormMessage').textContent = 'An error occurred. Please try again.';
+            document.getElementById('feedbackFormMessage').className = 'error';
+        });
+    });
+    </script>
+</body>
+</html> 
