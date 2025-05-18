@@ -102,6 +102,9 @@
                         <button class="btn btn-success" onclick="exportNominations()">
                             <i class="fas fa-download"></i> Export to CSV
                         </button>
+                        <button class="btn btn-danger ms-2" onclick="clearDatabase()">
+                            <i class="fas fa-trash"></i> Clear Database
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-striped">
@@ -334,6 +337,21 @@
                     </tr>
                 `;
             });
+        }
+
+        function clearDatabase() {
+            if (confirm('Did you take a backup? This will delete all nominations!')) {
+                fetch('/admin/api/clear-database', {method: 'POST'})
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('All nominations have been deleted.');
+                            fetchData();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    });
+            }
         }
 
         // Initial data load

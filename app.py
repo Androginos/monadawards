@@ -568,6 +568,17 @@ def admin_top_voters():
     top_voters = sorted(user_scores.values(), key=lambda x: (-x['total_score'], -x['num_first'], -x['num_second'], -x['num_third']))[:3]
     return jsonify(top_voters)
 
+@app.route('/admin/api/clear-database', methods=['POST'])
+@admin_required
+def clear_database():
+    try:
+        db.session.query(Nomination).delete()
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'All nominations have been deleted.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)})
+
 if __name__ == '__main__':
     with app.app_context():
         create_admin()
