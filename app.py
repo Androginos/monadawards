@@ -13,6 +13,7 @@ from io import StringIO
 import shutil
 import time
 import threading
+import requests
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))  # Güvenli ve gizli anahtar
@@ -460,6 +461,58 @@ def delete_allowed_ip(ip_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/discord/callback')
+def discord_callback():
+    code = request.args.get('code')
+    if not code:
+        return "No code provided", 400
+    # Discord'dan access token al
+    data = {
+        'client_id': '1373612267869835275',
+        'client_secret': '63U1ks7tkW7fq9QNTXiAIMM8SA2JqcX5',
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': 'http://localhost:5000/discord/callback',
+        'scope': 'identify guilds guilds.members.read'
+    }
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    token_response = requests.post('https://discord.com/api/oauth2/token', data=data, headers=headers)
+    if not token_response.ok:
+        return 'Token alınamadı', 400
+    tokens = token_response.json()
+    access_token = tokens['access_token']
+    # Kullanıcı bilgisi çek
+    user_response = requests.get(
+        'https://discord.com/api/users/@me',
+        headers={'Authorization': f'Bearer {access_token}'}
+    )
+    if not user_response.ok:
+        return 'Kullanıcı bilgisi alınamadı', 400
+    user_info = user_response.json()
+    # Session'a sadece global_name kaydet
+    session['discord_user'] = {
+        'id': user_info['id'],
+        'avatar': user_info.get('avatar', None),
+        'display_name': user_info.get('global_name', None)
+    }
+    return redirect(url_for('home'))
+
+@app.route('/discord/disconnect')
+def discord_disconnect():
+    session.pop('discord_user', None)
+    return redirect(url_for('home'))
+
+@app.route('/api/discord-user')
+def api_discord_user():
+    user = session.get('discord_user')
+    if not user:
+        return '', 404
+    return jsonify({
+        'id': user['id'],
+        'avatar': user['avatar'],
+        'display_name': user['display_name']
+    })
 
 if __name__ == '__main__':
     with app.app_context():

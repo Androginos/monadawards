@@ -38,6 +38,59 @@
             <p>From selfie sorcerers to engagement magicians, from identity adventurers to thread philosophers, we celebrate the true art of echoing into the void and getting heard.</p>
         </section>
 
+        <!-- Discord Connect Button Alanı -->
+        <div id="discord-connect-area" style="display: flex; justify-content: center; margin-bottom: 16px;"></div>
+        <script>
+        async function renderDiscordConnectArea() {
+          const area = document.getElementById('discord-connect-area');
+          try {
+            const res = await fetch('/api/discord-user');
+            if (res.ok) {
+              const user = await res.json();
+              area.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <img src="https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png" alt="Discord Avatar" style="width:100px;height:100px;border-radius:50%;margin-bottom:4px;">
+                  ${(user.display_name && user.display_name !== "undefined") ? `<div style=\"font-weight:600;font-size:17px;\">${user.display_name}</div>` : ''}
+                  <a href="/discord/disconnect" class="discord-connect-btn" style="margin-top:4px;">Disconnect</a>
+                </div>
+              `;
+            } else {
+              area.innerHTML = `<a href="https://discord.com/api/oauth2/authorize?client_id=1373612267869835275&redirect_uri=http://localhost:5000/discord/callback&response_type=code&scope=identify%20guilds%20guilds.members.read" class="discord-connect-btn">
+                <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/discord.svg" alt="Discord" style="height: 18px; vertical-align: middle; margin-right: 8px; filter: brightness(0) invert(1);">
+                Connect Discord
+              </a>`;
+            }
+          } catch (e) {
+            area.innerHTML = `<a href="https://discord.com/api/oauth2/authorize?client_id=1373612267869835275&redirect_uri=http://localhost:5000/discord/callback&response_type=code&scope=identify%20guilds%20guilds.members.read" class="discord-connect-btn">
+              <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/discord.svg" alt="Discord" style="height: 18px; vertical-align: middle; margin-right: 8px; filter: brightness(0) invert(1);">
+              Connect Discord
+            </a>`;
+          }
+        }
+        document.addEventListener('DOMContentLoaded', renderDiscordConnectArea);
+        </script>
+
+        <style>
+        .discord-connect-btn {
+            background: #a993ff;
+            color: #fff;
+            padding: 8px 20px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            border: none;
+        }
+        .discord-connect-btn:hover {
+            background: #8a6be6;
+        }
+        </style>
+
         <section id="categories" class="categories">
             <h2 class="categories-title">Categories</h2>
             <small>*Authenticity is optional. Virality is the goal.</small>
