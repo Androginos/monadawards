@@ -250,18 +250,21 @@
             
             const data = await response.json();
             
-            if (data.success) {
-                alert('Nomination submitted successfully!');
+            if (response.ok) {
+                // Başarılı gönderim
+                alert(data.message);
                 closeNominatePopup();
+                // Formu sıfırla
                 e.target.reset();
             } else {
-                throw new Error(data.message || 'Error submitting nomination');
+                // Hata durumu
+                alert(data.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error submitting nomination. Please try again.');
+            alert('Bir hata oluştu. Lütfen tekrar deneyin.');
         } finally {
-            // Reset button state
+            // Button normal state
             submitButton.disabled = false;
             buttonText.style.display = 'block';
             buttonLoader.style.display = 'none';

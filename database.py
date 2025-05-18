@@ -23,7 +23,19 @@ class Nomination(db.Model):
     reason = db.Column(db.Text)
     twitter_url = db.Column(db.String(200), nullable=False)
     monad_address = db.Column(db.String(42), nullable=False)
+    ip_address = db.Column(db.String(45), nullable=False)  # IPv6 için 45 karakter
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
+        return f'<Nomination {self.twitter_handle} -> {self.candidate}>'
+
+class AllowedIP(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ip_address = db.Column(db.String(45), nullable=False, unique=True)
+    description = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=True)  # None ise süresiz izin
+
+    def __repr__(self):
+        return f'<AllowedIP {self.ip_address}>' 
         return f'<Nomination {self.twitter_handle} -> {self.candidate}>' 
