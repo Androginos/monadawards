@@ -55,13 +55,13 @@
                 </div>
               `;
             } else {
-              area.innerHTML = `<a href="https://discord.com/api/oauth2/authorize?client_id=1373612267869835275&redirect_uri=http://localhost:5000/discord/callback&response_type=code&scope=identify%20guilds%20guilds.members.read" class="discord-connect-btn">
+              area.innerHTML = `<a href="https://discord.com/oauth2/authorize?client_id=1373612267869835275&response_type=code&redirect_uri=https%3A%2F%2Fmonadawards.onrender.com%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read" class="discord-connect-btn">
                 <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/discord.svg" alt="Discord" style="height: 18px; vertical-align: middle; margin-right: 8px; filter: brightness(0) invert(1);">
                 Connect Discord
               </a>`;
             }
           } catch (e) {
-            area.innerHTML = `<a href="https://discord.com/api/oauth2/authorize?client_id=1373612267869835275&redirect_uri=http://localhost:5000/discord/callback&response_type=code&scope=identify%20guilds%20guilds.members.read" class="discord-connect-btn">
+            area.innerHTML = `<a href="https://discord.com/oauth2/authorize?client_id=1373612267869835275&response_type=code&redirect_uri=https%3A%2F%2Fmonadawards.onrender.com%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read" class="discord-connect-btn">
               <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/discord.svg" alt="Discord" style="height: 18px; vertical-align: middle; margin-right: 8px; filter: brightness(0) invert(1);">
               Connect Discord
             </a>`;
@@ -157,9 +157,9 @@
 
                 <div class="award-card">
                     <h2>GYMONAD BULLIES</h2>
-                    <img src="/static/images/gmonad-bullies.png" alt="GMONAD Bullies" class="award-image">
+                    <img src="/static/images/gmonad-bullies.png" alt="GYMONAD Bullies" class="award-image">
                     <p>If you've ever feared saying something slightly wrong because they might see it — congratulations, you've met a GYMONAD Bully.</p>
-                    <button class="nominate-button" data-category="GMONAD BULLIES">
+                    <button class="nominate-button" data-category="GYMONAD BULLIES">
                         <span class="button-icon">&gt;</span>
                         <span class="button-text">Nominads</span>
                     </button>
@@ -193,25 +193,21 @@
                         <option value="MEME MINERS">MEME MINERS</option>
                         <option value="BAIT LORDS">BAIT LORDS</option>
                         <option value="DM DIPLOMATS">DM DIPLOMATS</option>
-                        <option value="GMONAD BULLIES">GMONAD BULLIES</option>
+                        <option value="GYMONAD BULLIES">GYMONAD BULLIES</option>
                         <option value="VIRTUE VAMPIRES">VIRTUE VAMPIRES</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="twitterHandle">What is your twitter handle?</label>
-                    <input type="text" id="twitterHandle" name="twitterHandle" required placeholder="@username">
+                    <label for="candidate">Who is your candidate?</label>
+                    <input type="text" id="candidate" name="candidate" required placeholder="@username X (Twitter) Handle">
                 </div>
                 <div class="form-group">
-                    <label for="candidate">@ Username for this category</label>
-                    <input type="text" id="candidate" name="candidate" required placeholder="@username">
-                </div>
-                <div class="form-group">
-                    <label for="reason">Why Your Candidate Deserves This Award? (Optional)</label>
+                    <label for="reason">Why does your nominee deserve this Award?? (Optional)</label>
                     <textarea id="reason" name="reason" rows="3" placeholder="Tell us why..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="twitterUrl">X (Twitter) Post URL</label>
-                    <input type="url" id="twitterUrl" name="twitterUrl" required placeholder="https://twitter.com/...">
+                    <label for="twitterUrl">Your candidate's example X posts URL in this category</label>
+                    <input type="url" id="twitterUrl" name="twitterUrl" placeholder="https://X.com/...">
                 </div>
                 <div class="form-group">
                     <label for="monadAddress">Monad Address</label>
@@ -286,7 +282,6 @@
         try {
             const formData = {
                 category: document.getElementById('category').value,
-                twitter_handle: document.getElementById('twitterHandle').value,
                 candidate: document.getElementById('candidate').value,
                 reason: document.getElementById('reason').value,
                 twitter_url: document.getElementById('twitterUrl').value,

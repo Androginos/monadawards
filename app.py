@@ -14,6 +14,7 @@ import shutil
 import time
 import threading
 import requests
+from collections import defaultdict, Counter
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))  # Güvenli ve gizli anahtar
@@ -31,6 +32,9 @@ limiter = Limiter(
 # Admin kullanıcı adı ve şifre ortam değişkenlerinden alınıyor
 ADMIN_USERNAME = os.environ['ADMIN_USERNAME']
 ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
+
+GUILD_ID = '1036357772826120242'
+FULL_ACCESS_ROLE_ID = '1072682201658970112'
 
 db.init_app(app)
 
@@ -101,6 +105,24 @@ def check_category_limit(ip_address, category):
 @app.route('/api/nominate', methods=['POST'])
 @limiter.limit("10 per minute")
 def nominate():
+    # Discord bağlantı kontrolü
+    discord_user = session.get('discord_user')
+    if not discord_user:
+        return jsonify({'success': False, 'message': 'You must connect your Discord account to vote.'}), 403
+    access_token = session.get('discord_access_token')
+    if not access_token:
+        return jsonify({'success': False, 'message': 'You must connect your Discord account to vote.'}), 403
+    # Kullanıcı Monad sunucusunda mı kontrol et
+    guilds_response = requests.get(
+        'https://discord.com/api/users/@me/guilds',
+        headers={'Authorization': f'Bearer {access_token}'}
+    )
+    if guilds_response.status_code != 200:
+        return jsonify({'success': False, 'message': 'Could not verify your Discord server membership.'}), 403
+    guilds = guilds_response.json()
+    in_monad = any(g['id'] == GUILD_ID for g in guilds)
+    if not in_monad:
+        return jsonify({'success': False, 'message': 'You must be a member of the Monad Discord server to vote.'}), 403
     try:
         data = request.json
         print("Received data:", data)
@@ -108,6 +130,14 @@ def nominate():
         # IP adresini al
         ip_address = request.remote_addr
         print(f"Request from IP: {ip_address}")
+        
+        # Discord ile kategori bazlı oy kontrolü
+        existing_discord_nom = Nomination.query.filter_by(
+            category=data['category'],
+            discord_id=discord_user['id']
+        ).first()
+        if existing_discord_nom:
+            return jsonify({'success': False, 'message': 'You have already voted in this category with your Discord account.'}), 403
         
         # Kategori limiti kontrolü
         if not check_category_limit(ip_address, data['category']):
@@ -118,7 +148,7 @@ def nominate():
                 'MEME MINERS': '😂 Your meme miner vote is already spreading joy!',
                 'BAIT LORDS': '🎣 Your bait lord nomination is already in the trap!',
                 'DM DIPLOMATS': '🤫 Your DM diplomat vote is already in the shadows!',
-                'GMONAD BULLIES': '💪 Your GYMONAD bully nomination is already flexing!',
+                'GYMONAD BULLIES': '💪 Your GYMONAD bully nomination is already flexing!',
                 'VIRTUE VAMPIRES': '🧛 Your virtue vampire vote is already sucking engagement!'
             }
             default_message = 'Whoa there! 🐎 You\'ve already cast your vote in this category. One vote per category keeps the awards fair!'
@@ -128,21 +158,15 @@ def nominate():
                 'message': category_messages.get(data['category'], default_message)
             }), 403
         
-        # Standardize Twitter handles
-        twitter_handle = standardize_twitter_handle(data.get('twitter_handle', ''))
-        candidate = standardize_twitter_handle(data.get('candidate', ''))
-        
         # Required fields check
-        required_fields = ['category', 'twitter_url', 'monad_address']
+        required_fields = ['category', 'monad_address']
         missing_fields = []
         for field in required_fields:
             if field not in data or not data[field]:
                 missing_fields.append(field)
-        
         if missing_fields:
             field_messages = {
                 'category': 'Which category are you voting for? 🎯',
-                'twitter_url': 'Don\'t forget to share the Twitter post! 🐦',
                 'monad_address': 'We need your Monad address to verify your vote! 🔐'
             }
             messages = [field_messages.get(field, field) for field in missing_fields]
@@ -150,54 +174,30 @@ def nominate():
                 'success': False, 
                 'message': f'Almost there! Just fill in these missing details: {", ".join(messages)} 📝'
             }), 400
-        
-        if not twitter_handle or not candidate:
-            if not twitter_handle and not candidate:
-                return jsonify({
-                    'success': False, 
-                    'message': 'Hey! Don\'t forget to tell us who you\'re voting for and your Twitter handle! 🐦'
-                }), 400
-            elif not twitter_handle:
-                return jsonify({
-                    'success': False, 
-                    'message': 'We need your Twitter handle to verify your vote! 🐦'
-                }), 400
-            else:
-                return jsonify({
-                    'success': False, 
-                    'message': 'Who are you voting for? Don\'t forget to mention them! 🎯'
-                }), 400
-        
-        # Twitter URL formatı kontrolü
-        if not (data['twitter_url'].startswith('https://twitter.com/') or data['twitter_url'].startswith('https://x.com/')):
-            return jsonify({
-                'success': False,
-                'message': 'That doesn\'t look like a Twitter (X) post! Make sure you\'re sharing a valid X link 🐦'
-            }), 400
-        
         # Monad adresi formatı kontrolü
-        if not data['monad_address'].startswith('0x') or len(data['monad_address']) != 42:
-            if not data['monad_address'].startswith('0x'):
+        monad_address = data['monad_address'].strip()
+        if not monad_address.startswith('0x') or len(monad_address) != 42:
+            if not monad_address.startswith('0x'):
                 return jsonify({
                     'success': False,
                     'message': 'Your Monad address should start with 0x! 🔍'
                 }), 400
-            elif len(data['monad_address']) != 42:
+            elif len(monad_address) != 42:
                 return jsonify({
                     'success': False,
                     'message': 'Your Monad address should be 42 characters long! 🔍'
                 }), 400
-        
         nomination = Nomination(
             category=data['category'],
-            twitter_handle=twitter_handle,
-            candidate=candidate,
+            twitter_handle='',  # Artık kullanılmıyor
+            candidate=data.get('candidate', ''),
             reason=data.get('reason'),
-            twitter_url=data['twitter_url'],
-            monad_address=data['monad_address'],
-            ip_address=ip_address
+            twitter_url=data.get('twitter_url', ''),
+            monad_address=monad_address,
+            ip_address=ip_address,
+            discord_id=discord_user['id'],
+            discord_display_name=discord_user.get('display_name', '')
         )
-        
         db.session.add(nomination)
         db.session.commit()
         print("Nomination successfully saved:", nomination.id)
@@ -210,7 +210,7 @@ def nominate():
             'MEME MINERS': '🎉 Your meme miner vote is in! Keep the laughs coming! 😂',
             'BAIT LORDS': '🎉 Your bait lord nomination is saved! The trap is set! 🎣',
             'DM DIPLOMATS': '🎉 Your DM diplomat vote is recorded! Moving in silence! 🤫',
-            'GMONAD BULLIES': '🎉 Your GYMONAD bully nomination is in! Flexing hard! 💪',
+            'GYMONAD BULLIES': '🎉 Your GYMONAD bully nomination is in! Flexing hard! 💪',
             'VIRTUE VAMPIRES': '🎉 Your virtue vampire vote is saved! Drama incoming! 🧛'
         }
         
@@ -260,14 +260,19 @@ def admin_panel():
 def admin_nominations():
     try:
         nominations = Nomination.query.order_by(Nomination.created_at.desc()).all()
-        return jsonify([{
-            'id': nom.id,
-            'category': nom.category,
-            'name': nom.candidate,
-            'twitter': nom.twitter_handle,
-            'reason': nom.reason,
-            'created_at': nom.created_at.isoformat() if nom.created_at else None
-        } for nom in nominations])
+        return jsonify([
+            {
+                'category': nom.category,
+                'candidate': nom.candidate,
+                'discord_display_name': nom.discord_display_name,
+                'discord_id': nom.discord_id,
+                'twitter_url': nom.twitter_url,
+                'created_at': nom.created_at.isoformat() if nom.created_at else None,
+                'reason': nom.reason,
+                'ip_address': nom.ip_address
+            }
+            for nom in nominations
+        ])
     except Exception as e:
         print(f"Hata oluştu: {str(e)}")  # Hata loglaması
         return jsonify({'error': str(e)}), 500
@@ -473,13 +478,13 @@ def discord_callback():
         'client_secret': '63U1ks7tkW7fq9QNTXiAIMM8SA2JqcX5',
         'grant_type': 'authorization_code',
         'code': code,
-        'redirect_uri': 'http://localhost:5000/discord/callback',
+        'redirect_uri': 'https://monadawards.onrender.com/discord/callback',
         'scope': 'identify guilds guilds.members.read'
     }
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     token_response = requests.post('https://discord.com/api/oauth2/token', data=data, headers=headers)
     if not token_response.ok:
-        return 'Token alınamadı', 400
+        return 'Token could not be obtained', 400
     tokens = token_response.json()
     access_token = tokens['access_token']
     # Kullanıcı bilgisi çek
@@ -488,14 +493,15 @@ def discord_callback():
         headers={'Authorization': f'Bearer {access_token}'}
     )
     if not user_response.ok:
-        return 'Kullanıcı bilgisi alınamadı', 400
+        return 'User info could not be obtained', 400
     user_info = user_response.json()
-    # Session'a sadece global_name kaydet
+    # Session'a kaydet
     session['discord_user'] = {
         'id': user_info['id'],
         'avatar': user_info.get('avatar', None),
         'display_name': user_info.get('global_name', None)
     }
+    session['discord_access_token'] = access_token
     return redirect(url_for('home'))
 
 @app.route('/discord/disconnect')
@@ -513,6 +519,54 @@ def api_discord_user():
         'avatar': user['avatar'],
         'display_name': user['display_name']
     })
+
+@app.route('/admin/api/top-voters')
+@admin_required
+def admin_top_voters():
+    # Her kategori için ilk 3 adayı bul
+    top_candidates = {}
+    category_votes = defaultdict(list)
+    all_nominations = Nomination.query.all()
+    for nom in all_nominations:
+        category_votes[nom.category].append(nom.candidate)
+    for category, votes in category_votes.items():
+        counter = Counter(votes)
+        top3 = [c for c, _ in counter.most_common(3)]
+        top_candidates[category] = top3
+    # Her kullanıcının oylarını ve puanlarını hesapla
+    user_scores = {}
+    for nom in all_nominations:
+        user_id = nom.discord_id
+        user_name = nom.discord_display_name
+        if not user_id:
+            continue
+        if user_id not in user_scores:
+            user_scores[user_id] = {
+                'discord_display_name': user_name,
+                'discord_id': user_id,
+                'total_score': 0,
+                'num_first': 0,
+                'num_second': 0,
+                'num_third': 0
+            }
+        # Bu kullanıcının bu kategorideki adayının sırası nedir?
+        top3 = top_candidates.get(nom.category, [])
+        try:
+            rank = top3.index(nom.candidate)
+        except ValueError:
+            rank = -1
+        if rank == 0:
+            user_scores[user_id]['total_score'] += 3
+            user_scores[user_id]['num_first'] += 1
+        elif rank == 1:
+            user_scores[user_id]['total_score'] += 2
+            user_scores[user_id]['num_second'] += 1
+        elif rank == 2:
+            user_scores[user_id]['total_score'] += 1
+            user_scores[user_id]['num_third'] += 1
+    # En çok puan alan ilk 3 kullanıcıyı sırala
+    top_voters = sorted(user_scores.values(), key=lambda x: (-x['total_score'], -x['num_first'], -x['num_second'], -x['num_third']))[:3]
+    return jsonify(top_voters)
 
 if __name__ == '__main__':
     with app.app_context():

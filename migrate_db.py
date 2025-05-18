@@ -72,4 +72,15 @@ if __name__ == '__main__':
     if migrate_database():
         print("Migration başarıyla tamamlandı.")
     else:
-        print("Migration sırasında hata oluştu.") 
+        print("Migration sırasında hata oluştu.")
+
+with app.app_context():
+    try:
+        db.engine.execute('ALTER TABLE nomination ADD COLUMN discord_id VARCHAR(50)')
+    except Exception as e:
+        print('discord_id zaten var:', e)
+    try:
+        db.engine.execute('ALTER TABLE nomination ADD COLUMN discord_display_name VARCHAR(100)')
+    except Exception as e:
+        print('discord_display_name zaten var:', e)
+    print('Migration tamamlandı.') 

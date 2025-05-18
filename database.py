@@ -25,6 +25,8 @@ class Nomination(db.Model):
     monad_address = db.Column(db.String(42), nullable=False)
     ip_address = db.Column(db.String(45), nullable=False)  # IPv6 için 45 karakter
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    discord_id = db.Column(db.String(50))
+    discord_display_name = db.Column(db.String(100))
 
     def __repr__(self):
         return f'<Nomination {self.twitter_handle} -> {self.candidate}>'

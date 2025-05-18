@@ -47,6 +47,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#" data-section="statistics">Statistics</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-section="top-voters">Top Voters</a>
+                    </li>
                     <li class="nav-item mt-4">
                         <a class="nav-link text-danger" href="/admin/logout">Logout</a>
                     </li>
@@ -71,7 +74,7 @@
                             <div class="card stat-card">
                                 <div class="card-body">
                                     <h5 class="card-title">Category Distribution</h5>
-                                    <canvas id="categoryChart"></canvas>
+                                    <canvas id="categoryChart" width="600" height="600" style="max-width:600px;max-height:600px;"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -104,12 +107,14 @@
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
                                     <th>Category</th>
                                     <th>Candidate</th>
-                                    <th>Twitter</th>
-                                    <th>Reason</th>
+                                    <th>Voter Discord Name</th>
+                                    <th>Voter Discord ID</th>
+                                    <th>X URL</th>
                                     <th>Date</th>
+                                    <th>Reason</th>
+                                    <th>IP</th>
                                 </tr>
                             </thead>
                             <tbody id="nominationsTable">
@@ -131,6 +136,24 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Top Voters Section -->
+                <div id="top-voters" class="section d-none">
+                    <h2 class="mb-4">Top Voters</h2>
+                    <table id="top-voters-table">
+                        <thead>
+                            <tr>
+                                <th>Discord Name</th>
+                                <th>Discord ID</th>
+                                <th>Total Score</th>
+                                <th>1st Place</th>
+                                <th>2nd Place</th>
+                                <th>3rd Place</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -171,12 +194,14 @@
                 const tableBody = document.getElementById('nominationsTable');
                 tableBody.innerHTML = nominations.map(nom => `
                     <tr>
-                        <td>${nom.id}</td>
                         <td>${nom.category}</td>
-                        <td>${nom.name}</td>
-                        <td>${nom.twitter}</td>
-                        <td>${nom.reason || '-'}</td>
+                        <td>${nom.candidate}</td>
+                        <td>${nom.discord_display_name || '-'}</td>
+                        <td>${nom.discord_id || '-'}</td>
+                        <td>${nom.twitter_url || '-'}</td>
                         <td>${new Date(nom.created_at).toLocaleString('tr-TR')}</td>
+                        <td>${nom.reason || '-'}</td>
+                        <td>${nom.ip_address || '-'}</td>
                     </tr>
                 `).join('');
 
@@ -276,6 +301,39 @@
         // CSV Export fonksiyonu
         function exportNominations() {
             window.location.href = '/admin/api/export/csv';
+        }
+
+        // Tab geçişi
+        const tabLinks = document.querySelectorAll('.tab-link');
+        tabLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                tabLinks.forEach(l => l.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(this.getAttribute('data-tab')).classList.add('active');
+                if (this.getAttribute('data-tab') === 'tab-top-voters') {
+                    loadTopVoters();
+                }
+            });
+        });
+
+        async function loadTopVoters() {
+            const res = await fetch('/admin/api/top-voters');
+            const data = await res.json();
+            const tbody = document.querySelector('#top-voters-table tbody');
+            tbody.innerHTML = '';
+            data.forEach(user => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${user.discord_display_name}</td>
+                        <td>${user.discord_id}</td>
+                        <td>${user.total_score}</td>
+                        <td>${user.num_first}</td>
+                        <td>${user.num_second}</td>
+                        <td>${user.num_third}</td>
+                    </tr>
+                `;
+            });
         }
 
         // Initial data load
