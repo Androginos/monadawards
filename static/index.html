@@ -35,7 +35,8 @@
         </section>
 
         <section class="intro-text">
-            <p>From selfie sorcerers to engagement magicians, from identity adventurers to thread philosophers, we celebrate the true art of echoing into the void and getting heard.</p>
+            <p style="margin-bottom: 20px;">From selfie sorcerers to engagement magicians, from identity adventurers to thread philosophers, we celebrate the true art of echoing into the void and getting heard.</p>
+            <p>But first, let's make sure you're not just another voice in the void - connect your Discord and join the echo chamber!</p>
         </section>
 
         <!-- Discord Connect Button Alanı -->
@@ -56,13 +57,13 @@
               `;
             } else {
               area.innerHTML = `<a href="https://discord.com/oauth2/authorize?client_id=1373612267869835275&response_type=code&redirect_uri=https%3A%2F%2Fmonadawards.onrender.com%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read" class="discord-connect-btn">
-                <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/discord.svg" alt="Discord" style="height: 18px; vertical-align: middle; margin-right: 8px; filter: brightness(0) invert(1);">
+                <img src="/static/images/dclogo.png" alt="Discord Logo" style="height: 18px; vertical-align: middle; margin-right: 8px;">
                 Connect Discord
               </a>`;
             }
           } catch (e) {
             area.innerHTML = `<a href="https://discord.com/oauth2/authorize?client_id=1373612267869835275&response_type=code&redirect_uri=https%3A%2F%2Fmonadawards.onrender.com%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read" class="discord-connect-btn">
-              <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/discord.svg" alt="Discord" style="height: 18px; vertical-align: middle; margin-right: 8px; filter: brightness(0) invert(1);">
+              <img src="/static/images/dclogo.png" alt="Discord Logo" style="height: 18px; vertical-align: middle; margin-right: 8px;">
               Connect Discord
             </a>`;
           }
@@ -72,7 +73,7 @@
 
         <style>
         .discord-connect-btn {
-            background: #a993ff;
+            background: #4B2991;
             color: #fff;
             padding: 8px 20px;
             border-radius: 999px;
@@ -87,7 +88,7 @@
             border: none;
         }
         .discord-connect-btn:hover {
-            background: #8a6be6;
+            background: #321a5d;
         }
         </style>
 
