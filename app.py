@@ -117,30 +117,22 @@ def check_category_limit(ip_address, category):
 @app.route('/api/nominate', methods=['POST'])
 @limiter.limit("10 per minute")
 def nominate():
-    # Discord bağlantı kontrolü
-    discord_user = session.get('discord_user')
-    if not discord_user:
-        return jsonify({'success': False, 'message': 'You must connect your Discord account to vote.'}), 403
-    access_token = session.get('discord_access_token')
-    if not access_token:
-        return jsonify({'success': False, 'message': 'You must connect your Discord account to vote.'}), 403
-    # Sunucu üyeliği kontrolü kaldırıldı
     try:
         data = request.json
         print("Received data:", data)
-        
         # IP adresini al
         ip_address = request.remote_addr
         print(f"Request from IP: {ip_address}")
-        
-        # Discord ile kategori bazlı oy kontrolü
+        # Discord kullanıcı adı zorunlu
+        if not data.get('discord_username'):
+            return jsonify({'success': False, 'message': 'Please enter your Discord username!'}), 400
+        # Discord ile kategori bazlı oy kontrolü (kullanıcı adı ile)
         existing_discord_nom = Nomination.query.filter_by(
             category=data['category'],
-            discord_id=discord_user['id']
+            discord_display_name=data['discord_username']
         ).first()
         if existing_discord_nom:
-            return jsonify({'success': False, 'message': 'You have already voted in this category with your Discord account.'}), 403
-        
+            return jsonify({'success': False, 'message': 'You have already voted in this category with this Discord username.'}), 403
         # Kategori limiti kontrolü
         if not check_category_limit(ip_address, data['category']):
             category_messages = {
@@ -154,14 +146,12 @@ def nominate():
                 'VIRTUE VAMPIRES': '🧛 Your virtue vampire vote is already sucking engagement!'
             }
             default_message = 'Whoa there! 🐎 You\'ve already cast your vote in this category. One vote per category keeps the awards fair!'
-            
             return jsonify({
                 'success': False, 
                 'message': category_messages.get(data['category'], default_message)
             }), 403
-        
         # Required fields check
-        required_fields = ['category', 'monad_address']
+        required_fields = ['category', 'monad_address', 'discord_username']
         missing_fields = []
         for field in required_fields:
             if field not in data or not data[field]:
@@ -169,7 +159,8 @@ def nominate():
         if missing_fields:
             field_messages = {
                 'category': 'Which category are you voting for? 🎯',
-                'monad_address': 'We need your Monad address to verify your vote! 🔐'
+                'monad_address': 'We need your Monad address to verify your vote! 🔐',
+                'discord_username': 'Please enter your Discord username!'
             }
             messages = [field_messages.get(field, field) for field in missing_fields]
             return jsonify({
@@ -197,13 +188,12 @@ def nominate():
             twitter_url=data.get('twitter_url', ''),
             monad_address=monad_address,
             ip_address=ip_address,
-            discord_id=discord_user['id'],
-            discord_display_name=discord_user.get('display_name', '')
+            discord_id='',  # Artık kullanılmıyor
+            discord_display_name=data['discord_username']
         )
         db.session.add(nomination)
         db.session.commit()
         print("Nomination successfully saved:", nomination.id)
-        
         # Başarılı mesajları kategoriye göre özelleştir
         success_messages = {
             'SELFIE SORCERERS': '🎉 Your selfie sorcerer nomination is in! Let\'s celebrate the selfie masters! 🚀',
@@ -215,7 +205,6 @@ def nominate():
             'GYMONAD BULLIES': '🎉 Your GYMONAD bully nomination is in! Flexing hard! 💪',
             'VIRTUE VAMPIRES': '🎉 Your virtue vampire vote is saved! Drama incoming! 🧛'
         }
-        
         return jsonify({
             'success': True,
             'message': success_messages.get(data['category'], '🎉 Amazing! Your vote is in! Thanks for being part of the Monad Awards! 🏆')
@@ -226,7 +215,7 @@ def nominate():
         print("Error occurred:", str(e))
         return jsonify({
             'success': False, 
-            'message': 'Oops! Something\'s not quite right. Give it another try in a moment! ��'
+            'message': 'Oops! Something\'s not quite right. Give it another try in a moment! '
         }), 400
 
 @app.route('/admin/login', methods=['GET', 'POST'])

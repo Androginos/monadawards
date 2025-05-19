@@ -39,59 +39,6 @@
             <p>But first, let's make sure you're not just another voice in the void - connect your Discord and join the echo chamber!</p>
         </section>
 
-        <!-- Discord Connect Button Alanı -->
-        <div id="discord-connect-area" style="display: flex; justify-content: center; margin-bottom: 16px;"></div>
-        <script>
-        async function renderDiscordConnectArea() {
-          const area = document.getElementById('discord-connect-area');
-          try {
-            const res = await fetch('/api/discord-user');
-            if (res.ok) {
-              const user = await res.json();
-              area.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                  <img src="https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png" alt="Discord Avatar" style="width:100px;height:100px;border-radius:50%;margin-bottom:4px;">
-                  ${(user.display_name && user.display_name !== "undefined") ? `<div style=\"font-weight:600;font-size:17px;\">${user.display_name}</div>` : ''}
-                  <a href="/discord/disconnect" class="discord-connect-btn" style="margin-top:4px;">Disconnect</a>
-                </div>
-              `;
-            } else {
-              area.innerHTML = `<a href="https://discord.com/oauth2/authorize?client_id=1373612267869835275&response_type=code&redirect_uri=https%3A%2F%2Fmonadawards.onrender.com%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read" class="discord-connect-btn">
-                <img src="/static/images/dclogo.png" alt="Discord Logo" style="height: 18px; vertical-align: middle; margin-right: 8px;">
-                Connect Discord
-              </a>`;
-            }
-          } catch (e) {
-            area.innerHTML = `<a href="https://discord.com/oauth2/authorize?client_id=1373612267869835275&response_type=code&redirect_uri=https%3A%2F%2Fmonadawards.onrender.com%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read" class="discord-connect-btn">
-              <img src="/static/images/dclogo.png" alt="Discord Logo" style="height: 18px; vertical-align: middle; margin-right: 8px;">
-              Connect Discord
-            </a>`;
-          }
-        }
-        document.addEventListener('DOMContentLoaded', renderDiscordConnectArea);
-        </script>
-
-        <style>
-        .discord-connect-btn {
-            background: #4B2991;
-            color: #fff;
-            padding: 8px 20px;
-            border-radius: 999px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-            border: none;
-        }
-        .discord-connect-btn:hover {
-            background: #321a5d;
-        }
-        </style>
-
         <section id="categories" class="categories">
             <h2 class="categories-title">Categories</h2>
             <small>*Authenticity is optional. Virality is the goal.</small>
@@ -214,6 +161,10 @@
                     <label for="monadAddress">Monad Address</label>
                     <input type="text" id="monadAddress" name="monadAddress" required placeholder="0x...">
                 </div>
+                <div class="form-group">
+                    <label for="discordUsername">Discord Username</label>
+                    <input type="text" id="discordUsername" name="discordUsername" required placeholder="username#1234">
+                </div>
                 <button type="submit" class="submit-button">
                     <span class="button-text">Submit Nomination</span>
                     <span class="button-loader" style="display: none;">Loading...</span>
@@ -286,7 +237,8 @@
                 candidate: document.getElementById('candidate').value,
                 reason: document.getElementById('reason').value,
                 twitter_url: document.getElementById('twitterUrl').value,
-                monad_address: document.getElementById('monadAddress').value
+                monad_address: document.getElementById('monadAddress').value,
+                discord_username: document.getElementById('discordUsername').value
             };
 
             const response = await fetch('/api/nominate', {
