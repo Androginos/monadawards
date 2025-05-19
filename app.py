@@ -458,6 +458,33 @@ def faq():
 def home():
     return send_from_directory('static', 'index.html')
 
+@app.route('/api/nominate', methods=['POST'])
+def api_nominate():
+    data = request.get_json()
+    category = data.get('category')
+    candidate = data.get('candidate')
+    reason = data.get('reason')
+    twitter_url = data.get('twitter_url')
+    monad_address = data.get('monad_address')
+    discord_display_name = data.get('discord_username')
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+
+    # twitter_handle ve discord_id formda yok, boş bırakıyoruz
+    nomination = Nomination(
+        category=category,
+        candidate=candidate,
+        reason=reason,
+        twitter_url=twitter_url,
+        monad_address=monad_address,
+        discord_display_name=discord_display_name,
+        discord_id=None,
+        twitter_handle='',
+        ip_address=ip_address
+    )
+    db.session.add(nomination)
+    db.session.commit()
+    return jsonify({'message': 'Adaylık başarıyla gönderildi!'}), 200
+
 if __name__ == '__main__':
     with app.app_context():
         create_admin()
