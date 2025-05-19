@@ -281,6 +281,7 @@ def admin_nominations():
                 'twitter_url': nom.twitter_url,
                 'created_at': nom.created_at.isoformat() if nom.created_at else None,
                 'reason': nom.reason,
+                'monad_address': nom.monad_address,
                 'ip_address': nom.ip_address
             }
             for nom in nominations
