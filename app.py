@@ -15,7 +15,7 @@ import time
 import threading
 import requests
 from collections import defaultdict, Counter
-from flask_wtf.csrf import CSRFProtect, generate_csrf, csrf_exempt
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))  # Güvenli ve gizli anahtar
@@ -59,7 +59,7 @@ ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin')  # Varsayılan değer
 
 # Discord OAuth bilgileri
 DISCORD_CLIENT_ID = os.environ.get('DISCORD_CLIENT_ID', '1373612267869835275')
-DISCORD_CLIENT_SECRET = os.environ.get('DISCORD_CLIENT_SECRET', '63U1ks7tkW7fq9QNTXiAIMM8SA2JqcX5')
+DISCORD_CLIENT_SECRET = os.environ['DISCORD_CLIENT_SECRET']
 DISCORD_REDIRECT_URI = os.environ.get('DISCORD_REDIRECT_URI', 'https://monadawards.onrender.com/discord/callback')
 
 GUILD_ID = '1036357772826120242'
@@ -467,7 +467,7 @@ def home():
     return send_from_directory('static', 'index.html')
 
 @app.route('/api/nominate', methods=['POST'])
-@csrf_exempt
+@csrf.exempt
 def api_nominate():
     data = request.get_json()
     category = data.get('category')
