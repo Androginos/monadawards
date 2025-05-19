@@ -69,7 +69,12 @@ db.init_app(app)
 
 def create_tables():
     with app.app_context():
+        print("Veritabanı tabloları oluşturuluyor...")  # Debug log
         db.create_all()
+        print("Veritabanı tabloları oluşturuldu.")  # Debug log
+        # İzin verilen IP'leri kontrol et
+        allowed_ips = AllowedIP.query.all()
+        print(f"Mevcut izin verilen IP'ler: {[ip.ip_address for ip in allowed_ips]}")  # Debug log
 
 # HTTPS zorunluluğu
 @app.before_request
