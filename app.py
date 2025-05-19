@@ -448,6 +448,11 @@ def clear_database():
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)})
 
+# FAQ route
+@app.route('/faq')
+def faq():
+    return send_from_directory('static', 'faq.html')
+
 # Ana route
 @app.route('/')
 def home():
