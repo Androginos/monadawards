@@ -83,6 +83,10 @@ def create_admin():
         new_admin.set_password(ADMIN_PASSWORD)
         db.session.add(new_admin)
         db.session.commit()
+    else:
+        # Şifreyi environment'tan gelenle güncelle
+        admin.set_password(ADMIN_PASSWORD)
+        db.session.commit()
 
 # HTTPS zorunluluğu
 @app.before_request
