@@ -117,6 +117,7 @@
                                     <th>X URL</th>
                                     <th>Date</th>
                                     <th>Reason</th>
+                                    <th>Monad Address</th>
                                     <th>IP</th>
                                 </tr>
                             </thead>
@@ -204,6 +205,7 @@
                         <td>${nom.twitter_url || '-'}</td>
                         <td>${new Date(nom.created_at).toLocaleString('tr-TR')}</td>
                         <td>${nom.reason || '-'}</td>
+                        <td>${nom.monad_address || '-'}</td>
                         <td>${nom.ip_address || '-'}</td>
                     </tr>
                 `).join('');
@@ -303,7 +305,40 @@
 
         // CSV Export fonksiyonu
         function exportNominations() {
-            window.location.href = '/admin/api/export/csv';
+            fetch('/admin/api/nominations')
+                .then(res => res.json())
+                .then(nominations => {
+                    const header = [
+                        'Category',
+                        'Candidate',
+                        'Voter Discord Name',
+                        'Voter Discord ID',
+                        'X URL',
+                        'Date',
+                        'Reason',
+                        'Monad Address',
+                        'IP'
+                    ];
+                    const rows = nominations.map(nom => [
+                        nom.category,
+                        nom.candidate,
+                        nom.discord_display_name || '-',
+                        nom.discord_id || '-',
+                        nom.twitter_url || '-',
+                        new Date(nom.created_at).toLocaleString('tr-TR'),
+                        nom.reason || '-',
+                        nom.monad_address || '-',
+                        nom.ip_address || '-'
+                    ]);
+                    let csvContent = header.join(',') + '\n' + rows.map(e => e.map(x => '"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.setAttribute('download', 'nominations.csv');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
         }
 
         // Tab geçişi
