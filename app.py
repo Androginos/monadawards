@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, Response
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, Response, abort
 from database import db, Admin, Nomination, AllowedIP
 from datetime import datetime, timedelta
 from functools import wraps
@@ -15,12 +15,24 @@ import time
 import threading
 import requests
 from collections import defaultdict, Counter
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))  # Güvenli ve gizli anahtar
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+app.config['SESSION_COOKIE_SECURE'] = True  # Sadece HTTPS üzerinden
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # JavaScript erişimini engelle
+app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # CSRF koruması
+
+# CSRF koruması
+csrf = CSRFProtect(app)
+
+# CSRF token'ı template'lere ekle
+@app.context_processor
+def inject_csrf_token():
+    return dict(csrf_token=csrf._get_csrf_token())
 
 # Security Headers
 @app.after_request
@@ -54,6 +66,16 @@ def create_tables():
     with app.app_context():
         db.create_all()
 
+# HTTPS zorunluluğu
+@app.before_request
+def force_https():
+    if not request.is_secure and not request.headers.get('X-Forwarded-Proto', 'http') == 'https':
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
+
+# Admin route'larını gizle
+ADMIN_ROUTE_PREFIX = 'superpanel-m0nad-2025'
+
 # Admin girişi gerekli decorator
 def admin_required(f):
     @wraps(f)
@@ -63,185 +85,62 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Admin kullanıcısını oluştur
-def create_admin():
-    with app.app_context():
-        # Veritabanı tablolarını oluştur (eğer yoksa)
-        db.create_all()
-        
-        # Admin kullanıcısı var mı kontrol et
-        admin_username = os.environ['ADMIN_USERNAME']
-        admin_password = os.environ['ADMIN_PASSWORD']
-        admin = Admin.query.filter_by(username=admin_username).first()
-        if not admin:
-            # Admin kullanıcısını oluştur
-            admin = Admin(username=admin_username)
-            admin.set_password(admin_password)
-            db.session.add(admin)
-            db.session.commit()
-
-def standardize_twitter_handle(handle):
-    """Twitter handle'ı standardize eder."""
-    if not handle:
-        return handle
-    # Başındaki boşlukları temizle
-    handle = handle.strip()
-    # Sadece başlangıçtaki @@ kontrolü
-    if handle.startswith('@@'):
-        handle = '@' + handle[2:]
-    # Eğer @ ile başlamıyorsa ekle
-    if not handle.startswith('@'):
-        handle = '@' + handle
-    return handle
-
-@app.route('/')
-def home():
-    return app.send_static_file('index.html')
-
-@app.route('/faq')
-def faq():
-    return app.send_static_file('faq.html')
-
-@app.route('/nominate-page')
-def nominate_page():
-    return app.send_static_file('nominate.html')
-
-def check_category_limit(ip_address, category):
-    """Bir IP'nin belirli bir kategoride daha önce oy kullanıp kullanmadığını kontrol eder."""
-    existing_nomination = Nomination.query.filter_by(
-        ip_address=ip_address,
-        category=category
+# Admin IP kontrolü
+def check_admin_ip():
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ip_address and ',' in ip_address:
+        ip_address = ip_address.split(',')[0].strip()
+    
+    allowed_ip = AllowedIP.query.filter(
+        AllowedIP.ip_address == ip_address,
+        (AllowedIP.expires_at.is_(None) | (AllowedIP.expires_at > datetime.utcnow()))
     ).first()
-    return existing_nomination is None
+    
+    return allowed_ip is not None
 
-@app.route('/api/nominate', methods=['POST'])
-@limiter.limit("10 per minute")
-def nominate():
-    try:
-        data = request.json
-        print("Received data:", data)
-        # IP adresini al
-        ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
-        if ip_address and ',' in ip_address:
-            ip_address = ip_address.split(',')[0].strip()
-        print(f"Request from IP: {ip_address}")
-        # Discord kullanıcı adı zorunlu
-        if not data.get('discord_username'):
-            return jsonify({'success': False, 'message': 'Please enter your Discord username!'}), 400
-        # Kategori limiti kontrolü
-        if not check_category_limit(ip_address, data['category']):
-            category_messages = {
-                'SELFIE SORCERERS': '🚀 Looks like you\'ve already nominated your favorite selfie sorcerer!',
-                'HYPE HITCHHIKERS': '👥 One hype hitchhiker nomination per person - that\'s the spirit!',
-                'AISHWASHERS': '💡 Your AI washer nomination is already in the stars!',
-                'MEME MINERS': '😂 Your meme miner vote is already spreading joy!',
-                'BAIT LORDS': '🎣 Your bait lord nomination is already in the trap!',
-                'DM DIPLOMATS': '🤫 Your DM diplomat vote is already in the shadows!',
-                'GYMONAD BULLIES': '💪 Your GYMONAD bully nomination is already flexing!',
-                'VIRTUE VAMPIRES': '🧛 Your virtue vampire vote is already sucking engagement!'
-            }
-            default_message = 'Whoa there! 🐎 You\'ve already cast your vote in this category. One vote per category keeps the awards fair!'
-            return jsonify({
-                'success': False, 
-                'message': category_messages.get(data['category'], default_message)
-            }), 403
-        # Required fields check
-        required_fields = ['category', 'monad_address', 'discord_username']
-        missing_fields = []
-        for field in required_fields:
-            if field not in data or not data[field]:
-                missing_fields.append(field)
-        if missing_fields:
-            field_messages = {
-                'category': 'Which category are you voting for? 🎯',
-                'monad_address': 'We need your Monad address to verify your vote! 🔐',
-                'discord_username': 'Please enter your Discord username!'
-            }
-            messages = [field_messages.get(field, field) for field in missing_fields]
-            return jsonify({
-                'success': False, 
-                'message': f'Almost there! Just fill in these missing details: {", ".join(messages)} 📝'
-            }), 400
-        # Monad adresi formatı kontrolü
-        monad_address = data['monad_address'].strip()
-        if not monad_address.startswith('0x') or len(monad_address) != 42:
-            if not monad_address.startswith('0x'):
-                return jsonify({
-                    'success': False,
-                    'message': 'Your Monad address should start with 0x! 🔍'
-                }), 400
-            elif len(monad_address) != 42:
-                return jsonify({
-                    'success': False,
-                    'message': 'Your Monad address should be 42 characters long! 🔍'
-                }), 400
-        nomination = Nomination(
-            category=data['category'],
-            twitter_handle='',  # Artık kullanılmıyor
-            candidate=data.get('candidate', ''),
-            reason=data.get('reason'),
-            twitter_url=data.get('twitter_url', ''),
-            monad_address=monad_address,
-            ip_address=ip_address,
-            discord_id='',  # Artık kullanılmıyor
-            discord_display_name=data['discord_username']
-        )
-        db.session.add(nomination)
-        db.session.commit()
-        print("Nomination successfully saved:", nomination.id)
-        # Başarılı mesajları kategoriye göre özelleştir
-        success_messages = {
-            'SELFIE SORCERERS': '🎉 Your selfie sorcerer nomination is in! Let\'s celebrate the selfie masters! 🚀',
-            'HYPE HITCHHIKERS': '🎉 Your hype hitchhiker vote is recorded! Together we grow! 👥',
-            'AISHWASHERS': '🎉 Your AI washer nomination is saved! Innovation never stops! 💡',
-            'MEME MINERS': '🎉 Your meme miner vote is in! Keep the laughs coming! 😂',
-            'BAIT LORDS': '🎉 Your bait lord nomination is saved! The trap is set! 🎣',
-            'DM DIPLOMATS': '🎉 Your DM diplomat vote is recorded! Moving in silence! 🤫',
-            'GYMONAD BULLIES': '🎉 Your GYMONAD bully nomination is in! Flexing hard! 💪',
-            'VIRTUE VAMPIRES': '🎉 Your virtue vampire vote is saved! Drama incoming! 🧛'
-        }
-        return jsonify({
-            'success': True,
-            'message': success_messages.get(data['category'], '🎉 Amazing! Your vote is in! Thanks for being part of the Monad Awards! 🏆')
-        })
-    except Exception as e:
-        import traceback; traceback.print_exc()
-        db.session.rollback()
-        print("Error occurred:", str(e))
-        return jsonify({
-            'success': False, 
-            'message': 'Oops! Something\'s not quite right. Give it another try in a moment! '
-        }), 400
+@app.before_request
+def limit_admin_access():
+    if request.path.startswith(f"/{ADMIN_ROUTE_PREFIX}"):
+        if not check_admin_ip():
+            abort(403, description="Bu IP adresinden erişim izniniz yok.")
 
-@app.route('/admin/login', methods=['GET', 'POST'])
+# Admin route'ları
+@app.route(f'/{ADMIN_ROUTE_PREFIX}/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
 def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        admin = Admin.query.filter_by(username=username).first()
+        if admin and admin.check_password(password):
             session['admin_logged_in'] = True
-            session['admin_id'] = 1
+            session['admin_id'] = admin.id
             session.permanent = True
+            
+            # Log başarılı giriş
+            print(f"[{datetime.utcnow()}] Başarılı admin girişi - IP: {request.remote_addr}, Kullanıcı: {username}")
+            
             return redirect(url_for('admin_panel'))
         else:
-            return render_template('admin_login.html', error='Invalid username or password')
+            # Log başarısız giriş denemesi
+            print(f"[{datetime.utcnow()}] Başarısız admin girişi - IP: {request.remote_addr}, Kullanıcı: {username}")
+            return render_template('admin_login.html', error='Geçersiz kullanıcı adı veya şifre')
     
     return render_template('admin_login.html')
 
-@app.route('/admin/logout')
+@app.route(f'/{ADMIN_ROUTE_PREFIX}/logout')
 def admin_logout():
     session.pop('admin_logged_in', None)
     session.pop('admin_id', None)
     return redirect(url_for('admin_login'))
 
-@app.route('/admin')
+@app.route(f'/{ADMIN_ROUTE_PREFIX}')
 @admin_required
 def admin_panel():
     return render_template('admin_panel.html')
 
-@app.route('/admin/api/nominations')
+@app.route(f'/{ADMIN_ROUTE_PREFIX}/api/nominations')
 @admin_required
 def admin_nominations():
     try:
@@ -264,7 +163,7 @@ def admin_nominations():
         print(f"Hata oluştu: {str(e)}")  # Hata loglaması
         return jsonify({'error': str(e)}), 500
 
-@app.route('/admin/api/statistics')
+@app.route(f'/{ADMIN_ROUTE_PREFIX}/api/statistics')
 @admin_required
 def admin_statistics():
     try:
@@ -310,36 +209,7 @@ def admin_statistics():
         print(f"Hata oluştu: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-def create_backup():
-    """Veritabanı yedeği oluşturur."""
-    backup_dir = 'backups'
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)
-    
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    backup_file = f'{backup_dir}/site_{timestamp}.db'
-    
-    # Veritabanı dosyasını yedekle
-    shutil.copy2('instance/site.db', backup_file)
-    
-    # Eski yedekleri temizle (son 7 gün hariç)
-    cleanup_old_backups(backup_dir)
-    
-    return backup_file
-
-def cleanup_old_backups(backup_dir, days=7):
-    """Belirtilen günden eski yedekleri temizler."""
-    cutoff_date = datetime.now() - timedelta(days=days)
-    
-    for filename in os.listdir(backup_dir):
-        if filename.startswith('site_') and filename.endswith('.db'):
-            filepath = os.path.join(backup_dir, filename)
-            file_date = datetime.fromtimestamp(os.path.getctime(filepath))
-            
-            if file_date < cutoff_date:
-                os.remove(filepath)
-
-@app.route('/admin/api/export/csv')
+@app.route(f'/{ADMIN_ROUTE_PREFIX}/api/export/csv')
 @admin_required
 def export_nominations_csv():
     try:
@@ -387,21 +257,7 @@ def export_nominations_csv():
         print(f"Export error: {str(e)}")
         return jsonify({'error': 'Export failed'}), 500
 
-# Otomatik yedekleme için scheduler
-def schedule_backup():
-    """Her gün gece yarısı yedek alır."""
-    while True:
-        now = datetime.now()
-        next_run = now.replace(hour=0, minute=0, second=0) + timedelta(days=1)
-        time.sleep((next_run - now).total_seconds())
-        create_backup()
-
-# Yedekleme işlemini başlat
-backup_thread = threading.Thread(target=schedule_backup, daemon=True)
-backup_thread.start()
-
-# Admin paneli için yeni endpoint'ler
-@app.route('/admin/api/allowed-ips', methods=['GET'])
+@app.route(f'/{ADMIN_ROUTE_PREFIX}/api/allowed-ips', methods=['GET'])
 @admin_required
 def get_allowed_ips():
     try:
@@ -416,7 +272,7 @@ def get_allowed_ips():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/admin/api/allowed-ips', methods=['POST'])
+@app.route(f'/{ADMIN_ROUTE_PREFIX}/api/allowed-ips', methods=['POST'])
 @admin_required
 def add_allowed_ip():
     try:
@@ -442,7 +298,7 @@ def add_allowed_ip():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/admin/api/allowed-ips/<int:ip_id>', methods=['DELETE'])
+@app.route(f'/{ADMIN_ROUTE_PREFIX}/api/allowed-ips/<int:ip_id>', methods=['DELETE'])
 @admin_required
 def delete_allowed_ip(ip_id):
     try:
@@ -509,7 +365,7 @@ def api_discord_user():
         'display_name': user['display_name']
     })
 
-@app.route('/admin/api/top-voters')
+@app.route(f'/{ADMIN_ROUTE_PREFIX}/api/top-voters')
 @admin_required
 def admin_top_voters():
     # Her kategori için ilk 3 adayı bul
@@ -557,7 +413,7 @@ def admin_top_voters():
     top_voters = sorted(user_scores.values(), key=lambda x: (-x['total_score'], -x['num_first'], -x['num_second'], -x['num_third']))[:3]
     return jsonify(top_voters)
 
-@app.route('/admin/api/clear-database', methods=['POST'])
+@app.route(f'/{ADMIN_ROUTE_PREFIX}/api/clear-database', methods=['POST'])
 @admin_required
 def clear_database():
     try:
