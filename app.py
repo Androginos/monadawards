@@ -124,9 +124,7 @@ def nominate():
     access_token = session.get('discord_access_token')
     if not access_token:
         return jsonify({'success': False, 'message': 'You must connect your Discord account to vote.'}), 403
-    # Kullanıcı Monad sunucusunda mı kontrol et (artık session'dan)
-    if not session.get('in_monad'):
-        return jsonify({'success': False, 'message': 'You must be a member of the Monad Discord server to vote.'}), 403
+    # Sunucu üyeliği kontrolü kaldırıldı
     try:
         data = request.json
         print("Received data:", data)
@@ -500,16 +498,7 @@ def discord_callback():
     if not user_response.ok:
         return 'User info could not be obtained', 400
     user_info = user_response.json()
-    # Kullanıcı Monad sunucusunda mı kontrol et
-    guilds_response = requests.get(
-        'https://discord.com/api/users/@me/guilds',
-        headers={'Authorization': f'Bearer {access_token}'}
-    )
-    in_monad = False
-    if guilds_response.ok:
-        guilds = guilds_response.json()
-        in_monad = any(g['id'] == GUILD_ID for g in guilds)
-    session['in_monad'] = in_monad
+    # Sunucu üyeliği kontrolü kaldırıldı
     # Session'a kaydet
     session['discord_user'] = {
         'id': user_info['id'],
@@ -522,7 +511,7 @@ def discord_callback():
 @app.route('/discord/disconnect')
 def discord_disconnect():
     session.pop('discord_user', None)
-    session.pop('in_monad', None)
+    session.pop('discord_access_token', None)
     return redirect(url_for('home'))
 
 @app.route('/api/discord-user')
