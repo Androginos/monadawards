@@ -54,8 +54,13 @@ limiter = Limiter(
 )
 
 # Admin kullanıcı adı ve şifre ortam değişkenlerinden alınıyor
-ADMIN_USERNAME = os.environ['ADMIN_USERNAME']
-ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')  # Varsayılan değer
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin')  # Varsayılan değer
+
+# Discord OAuth bilgileri
+DISCORD_CLIENT_ID = os.environ.get('DISCORD_CLIENT_ID', '1373612267869835275')
+DISCORD_CLIENT_SECRET = os.environ.get('DISCORD_CLIENT_SECRET', '63U1ks7tkW7fq9QNTXiAIMM8SA2JqcX5')
+DISCORD_REDIRECT_URI = os.environ.get('DISCORD_REDIRECT_URI', 'https://monadawards.onrender.com/discord/callback')
 
 GUILD_ID = '1036357772826120242'
 FULL_ACCESS_ROLE_ID = '1072682201658970112'
@@ -87,22 +92,36 @@ def admin_required(f):
 
 # Admin IP kontrolü
 def check_admin_ip():
-    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
-    if ip_address and ',' in ip_address:
-        ip_address = ip_address.split(',')[0].strip()
-    
-    allowed_ip = AllowedIP.query.filter(
-        AllowedIP.ip_address == ip_address,
-        (AllowedIP.expires_at.is_(None) | (AllowedIP.expires_at > datetime.utcnow()))
-    ).first()
-    
-    return allowed_ip is not None
+    try:
+        ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if ip_address and ',' in ip_address:
+            ip_address = ip_address.split(',')[0].strip()
+        
+        print(f"Gelen IP adresi: {ip_address}")  # Debug log
+        
+        allowed_ip = AllowedIP.query.filter(
+            AllowedIP.ip_address == ip_address,
+            (AllowedIP.expires_at.is_(None) | (AllowedIP.expires_at > datetime.utcnow()))
+        ).first()
+        
+        print(f"İzin verilen IP'ler: {[ip.ip_address for ip in AllowedIP.query.all()]}")  # Debug log
+        print(f"IP kontrolü sonucu: {allowed_ip is not None}")  # Debug log
+        
+        return allowed_ip is not None
+    except Exception as e:
+        print(f"IP kontrolünde hata: {str(e)}")  # Hata logu
+        return False
 
 @app.before_request
 def limit_admin_access():
     if request.path.startswith(f"/{ADMIN_ROUTE_PREFIX}"):
-        if not check_admin_ip():
-            abort(403, description="Bu IP adresinden erişim izniniz yok.")
+        try:
+            if not check_admin_ip():
+                print(f"Erişim reddedildi - IP: {request.remote_addr}")  # Debug log
+                abort(403, description="Bu IP adresinden erişim izniniz yok.")
+        except Exception as e:
+            print(f"Admin erişim kontrolünde hata: {str(e)}")  # Hata logu
+            abort(500, description="Sunucu hatası oluştu.")
 
 # Admin route'ları
 @app.route(f'/{ADMIN_ROUTE_PREFIX}/login', methods=['GET', 'POST'])
@@ -317,11 +336,11 @@ def discord_callback():
         return "No code provided", 400
     # Discord'dan access token al
     data = {
-        'client_id': '1373612267869835275',
-        'client_secret': '63U1ks7tkW7fq9QNTXiAIMM8SA2JqcX5',
+        'client_id': DISCORD_CLIENT_ID,
+        'client_secret': DISCORD_CLIENT_SECRET,
         'grant_type': 'authorization_code',
         'code': code,
-        'redirect_uri': 'https://monadawards.onrender.com/discord/callback',
+        'redirect_uri': DISCORD_REDIRECT_URI,
         'scope': 'identify guilds guilds.members.read'
     }
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
