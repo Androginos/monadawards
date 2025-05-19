@@ -121,7 +121,9 @@ def nominate():
         data = request.json
         print("Received data:", data)
         # IP adresini al
-        ip_address = request.remote_addr
+        ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if ip_address and ',' in ip_address:
+            ip_address = ip_address.split(',')[0].strip()
         print(f"Request from IP: {ip_address}")
         # Discord kullanıcı adı zorunlu
         if not data.get('discord_username'):
