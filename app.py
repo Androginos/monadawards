@@ -126,13 +126,6 @@ def nominate():
         # Discord kullanıcı adı zorunlu
         if not data.get('discord_username'):
             return jsonify({'success': False, 'message': 'Please enter your Discord username!'}), 400
-        # Discord ile kategori bazlı oy kontrolü (kullanıcı adı ile)
-        existing_discord_nom = Nomination.query.filter_by(
-            category=data['category'],
-            discord_display_name=data['discord_username']
-        ).first()
-        if existing_discord_nom:
-            return jsonify({'success': False, 'message': 'You have already voted in this category with this Discord username.'}), 403
         # Kategori limiti kontrolü
         if not check_category_limit(ip_address, data['category']):
             category_messages = {
