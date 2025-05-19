@@ -15,7 +15,7 @@ import time
 import threading
 import requests
 from collections import defaultdict, Counter
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))  # Güvenli ve gizli anahtar
@@ -32,7 +32,7 @@ csrf = CSRFProtect(app)
 # CSRF token'ı template'lere ekle
 @app.context_processor
 def inject_csrf_token():
-    return dict(csrf_token=csrf._get_csrf_token())
+    return dict(csrf_token=generate_csrf)
 
 # Security Headers
 @app.after_request
