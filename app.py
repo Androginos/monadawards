@@ -448,6 +448,11 @@ def clear_database():
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)})
 
+# Ana route
+@app.route('/')
+def home():
+    return render_template('index.html')
+
 if __name__ == '__main__':
     with app.app_context():
         create_admin()
