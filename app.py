@@ -15,7 +15,7 @@ import time
 import threading
 import requests
 from collections import defaultdict, Counter
-from flask_wtf.csrf import CSRFProtect, generate_csrf
+from flask_wtf.csrf import CSRFProtect, generate_csrf, csrf_exempt
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))  # Güvenli ve gizli anahtar
@@ -75,6 +75,14 @@ def create_tables():
         # İzin verilen IP'leri kontrol et
         allowed_ips = AllowedIP.query.all()
         print(f"Mevcut izin verilen IP'ler: {[ip.ip_address for ip in allowed_ips]}")  # Debug log
+
+def create_admin():
+    admin = Admin.query.filter_by(username=ADMIN_USERNAME).first()
+    if not admin:
+        new_admin = Admin(username=ADMIN_USERNAME)
+        new_admin.set_password(ADMIN_PASSWORD)
+        db.session.add(new_admin)
+        db.session.commit()
 
 # HTTPS zorunluluğu
 @app.before_request
@@ -459,6 +467,7 @@ def home():
     return send_from_directory('static', 'index.html')
 
 @app.route('/api/nominate', methods=['POST'])
+@csrf_exempt
 def api_nominate():
     data = request.get_json()
     category = data.get('category')
@@ -488,4 +497,5 @@ def api_nominate():
 if __name__ == '__main__':
     with app.app_context():
         create_admin()
+        create_tables()
     app.run(debug=True) 
