@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, Response, abort
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, Response, abort, send_from_directory
 from database import db, Admin, Nomination, AllowedIP
 from datetime import datetime, timedelta
 from functools import wraps
@@ -451,7 +451,7 @@ def clear_database():
 # Ana route
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return send_from_directory('static', 'index.html')
 
 if __name__ == '__main__':
     with app.app_context():
