@@ -184,8 +184,8 @@
         async function fetchData() {
             try {
                 const [nominationsRes, statsRes] = await Promise.all([
-                    fetch('/admin/api/nominations'),
-                    fetch('/admin/api/statistics')
+                    fetch('/superpanel-m0nad-2025/api/nominations'),
+                    fetch('/superpanel-m0nad-2025/api/statistics')
                 ]);
 
                 const nominations = await nominationsRes.json();
@@ -202,195 +202,148 @@
                         <td>${nom.candidate}</td>
                         <td>${nom.discord_display_name || '-'}</td>
                         <td>${nom.discord_id || '-'}</td>
-                        <td>${nom.twitter_url || '-'}</td>
-                        <td>${new Date(nom.created_at).toLocaleString('tr-TR')}</td>
-                        <td>${nom.reason || '-'}</td>
+                        <td><a href="${nom.twitter_url}" target="_blank">${nom.twitter_url}</a></td>
+                        <td>${new Date(nom.created_at).toLocaleString()}</td>
+                        <td>${nom.reason}</td>
                         <td>${nom.monad_address || '-'}</td>
-                        <td>${nom.ip_address || '-'}</td>
+                        <td>${nom.ip_address}</td>
                     </tr>
                 `).join('');
 
-                // Update charts
-                updateCharts(stats);
+                // Update category chart
+                const ctx = document.getElementById('categoryChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(stats.by_category),
+                        datasets: [{
+                            data: Object.values(stats.by_category),
+                            backgroundColor: [
+                                '#FF6384',
+                                '#36A2EB',
+                                '#FFCE56',
+                                '#4BC0C0',
+                                '#9966FF'
+                            ]
+                        }]
+                    }
+                });
+
+                // Update statistics chart
+                const statsCtx = document.getElementById('statisticsChart').getContext('2d');
+                new Chart(statsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(stats.by_category),
+                        datasets: [{
+                            label: 'Nominations by Category',
+                            data: Object.values(stats.by_category),
+                            backgroundColor: [
+                                '#FF6384',
+                                '#36A2EB',
+                                '#FFCE56',
+                                '#4BC0C0',
+                                '#9966FF'
+                            ]
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Update top candidates
+                const topCandidatesContainer = document.getElementById('topCandidatesContainer');
+                topCandidatesContainer.innerHTML = '';
+                for (const [category, candidates] of Object.entries(stats.top_candidates)) {
+                    const card = document.createElement('div');
+                    card.className = 'col-md-4 mb-4';
+                    card.innerHTML = `
+                        <div class="card">
+                            <div class="card-header">${category}</div>
+                            <div class="card-body">
+                                ${candidates.map(c => `
+                                    <div class="mb-2">
+                                        <strong>${c.rank}. ${c.candidate}</strong>
+                                        <div>Votes: ${c.votes} (${c.percentage}%)</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    topCandidatesContainer.appendChild(card);
+                }
             } catch (error) {
-                console.error('Veri yüklenirken hata oluştu:', error);
+                console.error('Error fetching data:', error);
             }
         }
 
-        function updateCharts(stats) {
-            // Category distribution chart
-            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-            new Chart(categoryCtx, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(stats.by_category),
-                    datasets: [{
-                        data: Object.values(stats.by_category),
-                        backgroundColor: [
-                            '#FF6384',
-                            '#36A2EB',
-                            '#FFCE56',
-                            '#4BC0C0',
-                            '#9966FF'
-                        ]
-                    }]
-                }
-            });
-
-            // Statistics chart
-            const statsCtx = document.getElementById('statisticsChart').getContext('2d');
-            new Chart(statsCtx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(stats.by_category),
-                    datasets: [{
-                        label: 'Adaylık Sayısı',
-                        data: Object.values(stats.by_category),
-                        backgroundColor: '#36A2EB'
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-
-            // Update top candidates
-            updateTopCandidates(stats.top_candidates);
+        // Export nominations
+        async function exportNominations() {
+            try {
+                const response = await fetch('/superpanel-m0nad-2025/api/export/csv');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'nominations.csv';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            } catch (error) {
+                console.error('Error exporting nominations:', error);
+            }
         }
 
-        function updateTopCandidates(topCandidates) {
-            const container = document.getElementById('topCandidatesContainer');
-            container.innerHTML = '';
-
-            Object.entries(topCandidates).forEach(([category, candidates]) => {
-                const categoryCard = document.createElement('div');
-                categoryCard.className = 'col-md-6 col-lg-4 mb-4';
-                categoryCard.innerHTML = `
-                    <div class="card h-100">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="card-title mb-0">${category}</h5>
-                        </div>
-                        <div class="card-body">
-                            ${candidates.map(candidate => `
-                                <div class="candidate-item mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">${candidate.rank}. ${candidate.candidate}</h6>
-                                            <div class="progress" style="height: 10px;">
-                                                <div class="progress-bar" role="progressbar" 
-                                                     style="width: ${candidate.percentage}%;" 
-                                                     aria-valuenow="${candidate.percentage}" 
-                                                     aria-valuemin="0" 
-                                                     aria-valuemax="100">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="text-end">
-                                            <small class="text-muted">${candidate.votes} votes</small><br>
-                                            <small class="text-muted">${candidate.percentage}%</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-                container.appendChild(categoryCard);
-            });
-        }
-
-        // CSV Export fonksiyonu
-        function exportNominations() {
-            fetch('/admin/api/nominations')
-                .then(res => res.json())
-                .then(nominations => {
-                    const header = [
-                        'Category',
-                        'Candidate',
-                        'Voter Discord Name',
-                        'Voter Discord ID',
-                        'X URL',
-                        'Date',
-                        'Reason',
-                        'Monad Address',
-                        'IP'
-                    ];
-                    const rows = nominations.map(nom => [
-                        nom.category,
-                        nom.candidate,
-                        nom.discord_display_name || '-',
-                        nom.discord_id || '-',
-                        nom.twitter_url || '-',
-                        new Date(nom.created_at).toLocaleString('tr-TR'),
-                        nom.reason || '-',
-                        nom.monad_address || '-',
-                        nom.ip_address || '-'
-                    ]);
-                    let csvContent = header.join(',') + '\n' + rows.map(e => e.map(x => '"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.setAttribute('download', 'nominations.csv');
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                });
-        }
-
-        // Tab geçişi
-        const tabLinks = document.querySelectorAll('.tab-link');
-        tabLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                tabLinks.forEach(l => l.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById(this.getAttribute('data-tab')).classList.add('active');
-                if (this.getAttribute('data-tab') === 'tab-top-voters') {
-                    loadTopVoters();
-                }
-            });
-        });
-
-        async function loadTopVoters() {
-            const res = await fetch('/admin/api/top-voters');
-            const data = await res.json();
-            const tbody = document.querySelector('#top-voters-table tbody');
-            tbody.innerHTML = '';
-            data.forEach(user => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${user.discord_display_name}</td>
-                        <td>${user.discord_id}</td>
-                        <td>${user.total_score}</td>
-                        <td>${user.num_first}</td>
-                        <td>${user.num_second}</td>
-                        <td>${user.num_third}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        function clearDatabase() {
-            if (confirm('Did you take a backup? This will delete all nominations!')) {
-                fetch('/admin/api/clear-database', {method: 'POST'})
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('All nominations have been deleted.');
-                            fetchData();
-                        } else {
-                            alert('Error: ' + data.message);
-                        }
+        // Clear database
+        async function clearDatabase() {
+            if (confirm('Are you sure you want to clear all nominations? This action cannot be undone.')) {
+                try {
+                    const response = await fetch('/superpanel-m0nad-2025/api/clear-database', {
+                        method: 'POST'
                     });
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('Database cleared successfully');
+                        fetchData();
+                    } else {
+                        alert('Error clearing database: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error clearing database:', error);
+                }
+            }
+        }
+
+        // Fetch top voters
+        async function fetchTopVoters() {
+            try {
+                const response = await fetch('/superpanel-m0nad-2025/api/top-voters');
+                const voters = await response.json();
+                const tbody = document.querySelector('#top-voters-table tbody');
+                tbody.innerHTML = voters.map(voter => `
+                    <tr>
+                        <td>${voter.discord_display_name}</td>
+                        <td>${voter.discord_id}</td>
+                        <td>${voter.total_score}</td>
+                        <td>${voter.num_first}</td>
+                        <td>${voter.num_second}</td>
+                        <td>${voter.num_third}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error fetching top voters:', error);
             }
         }
 
         // Initial data load
         fetchData();
+        fetchTopVoters();
     </script>
 </body>
 </html> 

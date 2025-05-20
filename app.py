@@ -59,8 +59,8 @@ ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin')  # Varsayılan değer
 
 # Discord OAuth bilgileri
 DISCORD_CLIENT_ID = os.environ.get('DISCORD_CLIENT_ID', '1373612267869835275')
-DISCORD_CLIENT_SECRET = os.environ['DISCORD_CLIENT_SECRET']
-DISCORD_REDIRECT_URI = os.environ.get('DISCORD_REDIRECT_URI', 'https://monadawards.onrender.com/discord/callback')
+DISCORD_CLIENT_SECRET = os.environ.get('DISCORD_CLIENT_SECRET', '63U1ks7tkW7fq9QNTXiAIMM8SA2JqcX5')
+DISCORD_REDIRECT_URI = os.environ.get('DISCORD_REDIRECT_URI', 'https://www.monadawards.xyz/discord/callback')
 
 GUILD_ID = '1036357772826120242'
 FULL_ACCESS_ROLE_ID = '1072682201658970112'
@@ -69,12 +69,43 @@ db.init_app(app)
 
 def create_tables():
     with app.app_context():
-        print("Veritabanı tabloları oluşturuluyor...")  # Debug log
-        db.create_all()
-        print("Veritabanı tabloları oluşturuldu.")  # Debug log
-        # İzin verilen IP'leri kontrol et
-        allowed_ips = AllowedIP.query.all()
-        print(f"Mevcut izin verilen IP'ler: {[ip.ip_address for ip in allowed_ips]}")  # Debug log
+        try:
+            print("Veritabanı tabloları oluşturuluyor...")  # Debug log
+            db.create_all()
+            print("Veritabanı tabloları oluşturuldu.")  # Debug log
+            
+            # Localhost IP'sini ekle
+            local_ip = AllowedIP.query.filter_by(ip_address='127.0.0.1').first()
+            if not local_ip:
+                local_ip = AllowedIP(
+                    ip_address='127.0.0.1',
+                    description='Local Development IP'
+                )
+                db.session.add(local_ip)
+                db.session.commit()
+                print("Localhost IP'si eklendi.")
+            
+            # İzin verilen IP'leri kontrol et
+            allowed_ips = AllowedIP.query.all()
+            print(f"Mevcut izin verilen IP'ler: {[ip.ip_address for ip in allowed_ips]}")  # Debug log
+            
+            # Test verisi ekle
+            test_nomination = Nomination(
+                category='Test Kategori',
+                candidate='Test Aday',
+                reason='Test Sebep',
+                ip_address='127.0.0.1',
+                twitter_handle='@test',
+                twitter_url='https://twitter.com/test',
+                monad_address='0x123...',
+                discord_display_name='Test User'
+            )
+            db.session.add(test_nomination)
+            db.session.commit()
+            print("Test verisi eklendi.")
+        except Exception as e:
+            print(f"Veritabanı işlemlerinde hata: {str(e)}")
+            db.session.rollback()
 
 def create_admin():
     admin = Admin.query.filter_by(username=ADMIN_USERNAME).first()
@@ -91,9 +122,11 @@ def create_admin():
 # HTTPS zorunluluğu
 @app.before_request
 def force_https():
-    if not request.is_secure and not request.headers.get('X-Forwarded-Proto', 'http') == 'https':
-        url = request.url.replace('http://', 'https://', 1)
-        return redirect(url, code=301)
+    # Sadece production ortamında HTTPS zorunluluğu
+    if os.environ.get('FLASK_ENV') == 'production':
+        if not request.is_secure and not request.headers.get('X-Forwarded-Proto', 'http') == 'https':
+            url = request.url.replace('http://', 'https://', 1)
+            return redirect(url, code=301)
 
 # Admin route'larını gizle
 ADMIN_ROUTE_PREFIX = 'superpanel-m0nad-2025'
@@ -212,7 +245,7 @@ def admin_statistics():
             db.func.count(Nomination.id).label('total')
         ).group_by(Nomination.category).all()
         
-        by_category = {cat: total for cat, total in category_totals}
+        by_category = {cat: count for cat, count in category_totals}
         
         # Her kategorinin en çok oy alan ilk 3 adayı
         top_candidates = {}
@@ -230,9 +263,9 @@ def admin_statistics():
             ).limit(3).all()
             
             top_candidates[category] = [{
-                'candidate': standardize_twitter_handle(candidate),
+                'candidate': candidate,
                 'votes': count,
-                'percentage': round((count / total_votes) * 100, 2),
+                'percentage': round((count / total_votes) * 100, 2) if total_votes else 0,
                 'rank': idx + 1
             } for idx, (candidate, count) in enumerate(candidates)]
         
@@ -414,17 +447,15 @@ def admin_top_voters():
         counter = Counter(votes)
         top3 = [c for c, _ in counter.most_common(3)]
         top_candidates[category] = top3
-    # Her kullanıcının oylarını ve puanlarını hesapla
+    # Her kullanıcının oylarını ve puanlarını hesapla (display name bazlı)
     user_scores = {}
     for nom in all_nominations:
-        user_id = nom.discord_id
         user_name = nom.discord_display_name
-        if not user_id:
+        if not user_name:
             continue
-        if user_id not in user_scores:
-            user_scores[user_id] = {
+        if user_name not in user_scores:
+            user_scores[user_name] = {
                 'discord_display_name': user_name,
-                'discord_id': user_id,
                 'total_score': 0,
                 'num_first': 0,
                 'num_second': 0,
@@ -437,21 +468,30 @@ def admin_top_voters():
         except ValueError:
             rank = -1
         if rank == 0:
-            user_scores[user_id]['total_score'] += 3
-            user_scores[user_id]['num_first'] += 1
+            user_scores[user_name]['total_score'] += 3
+            user_scores[user_name]['num_first'] += 1
         elif rank == 1:
-            user_scores[user_id]['total_score'] += 2
-            user_scores[user_id]['num_second'] += 1
+            user_scores[user_name]['total_score'] += 2
+            user_scores[user_name]['num_second'] += 1
         elif rank == 2:
-            user_scores[user_id]['total_score'] += 1
-            user_scores[user_id]['num_third'] += 1
+            user_scores[user_name]['total_score'] += 1
+            user_scores[user_name]['num_third'] += 1
     # En çok puan alan ilk 3 kullanıcıyı sırala
     top_voters = sorted(user_scores.values(), key=lambda x: (-x['total_score'], -x['num_first'], -x['num_second'], -x['num_third']))[:3]
     return jsonify(top_voters)
 
 @app.route(f'/{ADMIN_ROUTE_PREFIX}/api/clear-database', methods=['POST'])
+@csrf.exempt
 @admin_required
 def clear_database():
+    # Ekstra IP kontrolü
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    allowed_ip = AllowedIP.query.filter(
+        AllowedIP.ip_address == ip_address,
+        (AllowedIP.expires_at.is_(None) | (AllowedIP.expires_at > datetime.utcnow()))
+    ).first()
+    if not allowed_ip:
+        return jsonify({'success': False, 'message': 'Bu IP adresinden silme yetkiniz yok!'}), 403
     try:
         db.session.query(Nomination).delete()
         db.session.commit()
@@ -480,14 +520,15 @@ def api_nominate():
     twitter_url = data.get('twitter_url')
     monad_address = data.get('monad_address')
     discord_display_name = data.get('discord_username')
+    discord_id = data.get('discord_id')  # Discord ID'yi al
+    twitter_handle = data.get('twitter_handle', '')  # Twitter handle'ı al
     ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     # Aynı IP ve kategori için daha önce oy verilmiş mi kontrol et
     existing = Nomination.query.filter_by(ip_address=ip_address, category=category).first()
     if existing:
-        return jsonify({'message': 'Bu kategoride bu IP adresinden zaten oy kullanıldı!'}), 400
+        return jsonify({'message': 'You have already voted in this category!'}), 400
 
-    # twitter_handle ve discord_id formda yok, boş bırakıyoruz
     nomination = Nomination(
         category=category,
         candidate=candidate,
@@ -495,16 +536,16 @@ def api_nominate():
         twitter_url=twitter_url,
         monad_address=monad_address,
         discord_display_name=discord_display_name,
-        discord_id=None,
-        twitter_handle='',
+        discord_id=discord_id,  # Discord ID'yi kaydet
+        twitter_handle=twitter_handle,  # Twitter handle'ı kaydet
         ip_address=ip_address
     )
     db.session.add(nomination)
     db.session.commit()
-    return jsonify({'message': 'Adaylık başarıyla gönderildi!'}), 200
+    return jsonify({'message': 'Your nomination has been submitted successfully!'}), 200
 
 if __name__ == '__main__':
     with app.app_context():
-        create_admin()
-        create_tables()
-    app.run(debug=True) 
+        create_tables()  # Önce tabloları oluştur
+        create_admin()   # Sonra admin kullanıcısını oluştur
+    app.run(debug=True, use_reloader=True, host='127.0.0.1', port=5000) 
