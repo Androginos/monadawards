@@ -482,6 +482,11 @@ def api_nominate():
     discord_display_name = data.get('discord_username')
     ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
 
+    # Aynı IP ve kategori için daha önce oy verilmiş mi kontrol et
+    existing = Nomination.query.filter_by(ip_address=ip_address, category=category).first()
+    if existing:
+        return jsonify({'message': 'Bu kategoride bu IP adresinden zaten oy kullanıldı!'}), 400
+
     # twitter_handle ve discord_id formda yok, boş bırakıyoruz
     nomination = Nomination(
         category=category,
