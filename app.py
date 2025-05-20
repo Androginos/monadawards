@@ -485,12 +485,7 @@ def admin_top_voters():
 @admin_required
 def clear_database():
     # Ekstra IP kontrolü
-    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
-    allowed_ip = AllowedIP.query.filter(
-        AllowedIP.ip_address == ip_address,
-        (AllowedIP.expires_at.is_(None) | (AllowedIP.expires_at > datetime.utcnow()))
-    ).first()
-    if not allowed_ip:
+    if not check_admin_ip():
         return jsonify({'success': False, 'message': 'Bu IP adresinden silme yetkiniz yok!'}), 403
     try:
         db.session.query(Nomination).delete()
