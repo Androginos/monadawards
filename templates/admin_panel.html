@@ -50,8 +50,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#" data-section="top-voters">Top Voters</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-section="ip-management">IP Management</a>
+                    </li>
                     <li class="nav-item mt-4">
-                        <a class="nav-link text-danger" href="/admin/logout">Logout</a>
+                        <a class="nav-link text-danger" href="/superpanel-m0nad-2025/logout">Logout</a>
                     </li>
                 </ul>
             </div>
@@ -158,6 +161,50 @@
                         </thead>
                         <tbody></tbody>
                     </table>
+                </div>
+
+                <!-- IP Management Section -->
+                <div id="ip-management" class="section d-none">
+                    <h2 class="mb-4">IP Management</h2>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Add New IP</h5>
+                            <form id="addIpForm" class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="ipAddress" class="form-label">IP Address</label>
+                                    <input type="text" class="form-control" id="ipAddress" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="ipDescription" class="form-label">Description</label>
+                                    <input type="text" class="form-control" id="ipDescription">
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Add IP</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Allowed IPs</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>IP Address</th>
+                                            <th>Description</th>
+                                            <th>Added Date</th>
+                                            <th>Expires At</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="allowedIpsTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -340,6 +387,85 @@
                 console.error('Error fetching top voters:', error);
             }
         }
+
+        // IP Management Functions
+        async function loadAllowedIps() {
+            try {
+                const response = await fetch('/superpanel-m0nad-2025/api/allowed-ips');
+                const ips = await response.json();
+                const tableBody = document.getElementById('allowedIpsTable');
+                tableBody.innerHTML = ips.map(ip => `
+                    <tr>
+                        <td>${ip.ip_address}</td>
+                        <td>${ip.description || '-'}</td>
+                        <td>${new Date(ip.created_at).toLocaleString()}</td>
+                        <td>${ip.expires_at ? new Date(ip.expires_at).toLocaleString() : 'Never'}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteIp(${ip.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading IPs:', error);
+                alert('Error loading IPs');
+            }
+        }
+
+        async function addIp(event) {
+            event.preventDefault();
+            const ipAddress = document.getElementById('ipAddress').value;
+            const description = document.getElementById('ipDescription').value;
+
+            try {
+                const response = await fetch('/superpanel-m0nad-2025/api/allowed-ips', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ip_address: ipAddress,
+                        description: description
+                    })
+                });
+
+                if (response.ok) {
+                    document.getElementById('addIpForm').reset();
+                    loadAllowedIps();
+                    alert('IP added successfully');
+                } else {
+                    throw new Error('Failed to add IP');
+                }
+            } catch (error) {
+                console.error('Error adding IP:', error);
+                alert('Error adding IP');
+            }
+        }
+
+        async function deleteIp(ipId) {
+            if (!confirm('Are you sure you want to delete this IP?')) return;
+
+            try {
+                const response = await fetch(`/superpanel-m0nad-2025/api/allowed-ips/${ipId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadAllowedIps();
+                    alert('IP deleted successfully');
+                } else {
+                    throw new Error('Failed to delete IP');
+                }
+            } catch (error) {
+                console.error('Error deleting IP:', error);
+                alert('Error deleting IP');
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('addIpForm').addEventListener('submit', addIp);
+
+        // Load IPs when IP Management section is shown
+        document.querySelector('[data-section="ip-management"]').addEventListener('click', loadAllowedIps);
 
         // Initial data load
         fetchData();
