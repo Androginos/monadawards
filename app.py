@@ -71,7 +71,7 @@ def create_tables():
     with app.app_context():
         try:
             print("Veritabanı tabloları oluşturuluyor...")  # Debug log
-            db.create_all()
+        db.create_all()
             print("Veritabanı tabloları oluşturuldu.")  # Debug log
             
             # Localhost IP'sini ekle
@@ -242,7 +242,7 @@ def update_allowed_ip(ip_address):
             # Yeni IP'yi ekle
             new_ip = AllowedIP(ip_address=ip_address)
             db.session.add(new_ip)
-            db.session.commit()
+        db.session.commit()
             print(f"Yeni IP eklendi: {ip_address}")
     except Exception as e:
         print(f"IP güncelleme hatası: {e}")
@@ -413,13 +413,39 @@ def get_allowed_ips():
 @admin_required
 def add_allowed_ip():
     try:
-        data = request.json
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Veri gönderilmedi'}), 400
+            
         ip_address = data.get('ip_address')
+        if not ip_address:
+            return jsonify({'error': 'IP adresi gerekli'}), 400
+            
         description = data.get('description', '')
         expires_at = None
         
         if data.get('expires_at'):
+            try:
             expires_at = datetime.fromisoformat(data['expires_at'])
+            except ValueError:
+                return jsonify({'error': 'Geçersiz tarih formatı'}), 400
+        
+        # IP formatını kontrol et
+        if '*' in ip_address:
+            # IP range formatı kontrolü
+            parts = ip_address.split('.')
+            if len(parts) != 4 or parts[-1] != '*':
+                return jsonify({'error': 'Geçersiz IP range formatı. Örnek: 83.7.138.*'}), 400
+        else:
+            # Normal IP formatı kontrolü
+            parts = ip_address.split('.')
+            if len(parts) != 4 or not all(p.isdigit() and 0 <= int(p) <= 255 for p in parts):
+                return jsonify({'error': 'Geçersiz IP formatı'}), 400
+        
+        # IP zaten var mı kontrol et
+        existing_ip = AllowedIP.query.filter_by(ip_address=ip_address).first()
+        if existing_ip:
+            return jsonify({'error': 'Bu IP adresi zaten ekli'}), 400
         
         allowed_ip = AllowedIP(
             ip_address=ip_address,
@@ -430,22 +456,44 @@ def add_allowed_ip():
         db.session.add(allowed_ip)
         db.session.commit()
         
-        return jsonify({'success': True})
+        return jsonify({
+            'success': True,
+            'message': 'IP başarıyla eklendi',
+            'ip': {
+                'id': allowed_ip.id,
+                'ip_address': allowed_ip.ip_address,
+                'description': allowed_ip.description,
+                'created_at': allowed_ip.created_at.isoformat(),
+                'expires_at': allowed_ip.expires_at.isoformat() if allowed_ip.expires_at else None
+            }
+        })
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        print(f"IP ekleme hatası: {str(e)}")  # Hata logu
+        return jsonify({'error': f'IP eklenirken hata oluştu: {str(e)}'}), 500
 
 @app.route(f'/{ADMIN_ROUTE_PREFIX}/api/allowed-ips/<int:ip_id>', methods=['DELETE'])
 @admin_required
 def delete_allowed_ip(ip_id):
     try:
         allowed_ip = AllowedIP.query.get_or_404(ip_id)
+        
+        # Localhost IP'sini silmeye çalışıyorsa engelle
+        if allowed_ip.ip_address == '127.0.0.1':
+            return jsonify({'error': 'Localhost IP\'si silinemez'}), 400
+            
         db.session.delete(allowed_ip)
         db.session.commit()
-        return jsonify({'success': True})
+        
+        return jsonify({
+            'success': True,
+            'message': 'IP başarıyla silindi',
+            'deleted_ip': allowed_ip.ip_address
+        })
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        print(f"IP silme hatası: {str(e)}")  # Hata logu
+        return jsonify({'error': f'IP silinirken hata oluştu: {str(e)}'}), 500
 
 @app.route('/discord/callback')
 def discord_callback():
@@ -552,16 +600,55 @@ def admin_top_voters():
 @csrf.exempt
 @admin_required
 def clear_database():
-    # Ekstra IP kontrolü
-    if not is_ip_allowed(request.remote_addr):
-        return jsonify({'success': False, 'message': 'Bu IP adresinden silme yetkiniz yok!'}), 403
     try:
+        # Environment'dan IP'leri al
+        allowed_ips = os.environ.get('ALLOWED_IPS', '127.0.0.1').split(',')
+        allowed_ips = [ip.strip() for ip in allowed_ips]
+        
+        # Gelen IP'yi al
+        ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if ip_address and ',' in ip_address:
+            ip_address = ip_address.split(',')[0].strip()
+        
+        print(f"Veritabanı silme isteği - IP: {ip_address}")
+        print(f"İzin verilen IP'ler: {allowed_ips}")
+        
+        # IP kontrolü
+        is_allowed = False
+        for allowed_ip in allowed_ips:
+            if '*' in allowed_ip:
+                # IP range kontrolü
+                base_ip = allowed_ip.rsplit('.', 1)[0]
+                if ip_address.startswith(base_ip + '.'):
+                    is_allowed = True
+                    break
+            elif ip_address == allowed_ip:
+                # Tam IP eşleşmesi
+                is_allowed = True
+                break
+        
+        if not is_allowed:
+            print(f"Veritabanı silme erişimi reddedildi - IP: {ip_address}")
+            return jsonify({
+                'success': False, 
+                'message': 'Bu IP adresinden veritabanı silme yetkiniz yok!'
+            }), 403
+            
+        # Veritabanını temizle
         db.session.query(Nomination).delete()
         db.session.commit()
-        return jsonify({'success': True, 'message': 'All nominations have been deleted.'})
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Tüm adaylıklar başarıyla silindi.'
+        })
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)})
+        print(f"Veritabanı silme hatası: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': f'Veritabanı silinirken hata oluştu: {str(e)}'
+        }), 500
 
 # FAQ route
 @app.route('/faq')
