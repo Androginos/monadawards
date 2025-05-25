@@ -186,13 +186,22 @@ def check_admin_ip():
         allowed_ips = os.environ.get('ALLOWED_IPS', '127.0.0.1').split(',')
         allowed_ips = [ip.strip() for ip in allowed_ips]
         
+        # Tüm IP bilgilerini logla
+        print("=== IP Debug Bilgileri ===")
+        print(f"Remote Addr: {request.remote_addr}")
+        print(f"X-Forwarded-For: {request.headers.get('X-Forwarded-For')}")
+        print(f"X-Real-IP: {request.headers.get('X-Real-IP')}")
+        print(f"True-Client-IP: {request.headers.get('True-Client-IP')}")
+        print(f"CF-Connecting-IP: {request.headers.get('CF-Connecting-IP')}")
+        print("========================")
+        
         # Gelen IP'yi al
         ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
         if ip_address and ',' in ip_address:
             ip_address = ip_address.split(',')[0].strip()
         
-        print(f"Gelen IP adresi: {ip_address}")  # Debug log
-        print(f"İzin verilen IP'ler: {allowed_ips}")  # Debug log
+        print(f"Seçilen IP adresi: {ip_address}")
+        print(f"İzin verilen IP'ler: {allowed_ips}")
         
         # IP kontrolü
         for allowed_ip in allowed_ips:
