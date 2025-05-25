@@ -147,6 +147,12 @@ def is_ip_allowed(ip):
         if ip and ',' in ip:
             ip = ip.split(',')[0].strip()
         
+        # X-Forwarded-For header'ını kontrol et
+        forwarded_ip = request.headers.get('X-Forwarded-For')
+        if forwarded_ip:
+            forwarded_ip = forwarded_ip.split(',')[0].strip()
+            print(f"X-Forwarded-For IP: {forwarded_ip}")  # Debug log
+        
         print(f"Gelen IP adresi: {ip}")  # Debug log
         
         # Tüm izin verilen IP'leri al
@@ -154,7 +160,7 @@ def is_ip_allowed(ip):
         print(f"İzin verilen IP'ler: {allowed_ips}")  # Debug log
         
         # Direkt IP kontrolü
-        if ip in allowed_ips:
+        if ip in allowed_ips or (forwarded_ip and forwarded_ip in allowed_ips):
             print("IP direkt eşleşme bulundu")  # Debug log
             return True
             
@@ -163,7 +169,7 @@ def is_ip_allowed(ip):
             if '*' in allowed_ip:
                 # IP range formatı: 83.7.138.*
                 base_ip = allowed_ip.rsplit('.', 1)[0]  # 83.7.138
-                if ip.startswith(base_ip + '.'):
+                if ip.startswith(base_ip + '.') or (forwarded_ip and forwarded_ip.startswith(base_ip + '.')):
                     print(f"IP range eşleşmesi bulundu: {allowed_ip}")  # Debug log
                     return True
         
