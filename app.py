@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, Response, abort, send_from_directory
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, Response, abort, send_from_directory, flash
 from database import db, Admin, Nomination, AllowedIP
 from datetime import datetime, timedelta
 from functools import wraps
@@ -140,6 +140,39 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def is_ip_allowed(ip):
+    """IP adresinin izin verilen listede olup olmadığını kontrol eder"""
+    try:
+        # IP adresini temizle
+        if ip and ',' in ip:
+            ip = ip.split(',')[0].strip()
+        
+        print(f"Gelen IP adresi: {ip}")  # Debug log
+        
+        # Tüm izin verilen IP'leri al
+        allowed_ips = [ip.ip_address for ip in AllowedIP.query.all()]
+        print(f"İzin verilen IP'ler: {allowed_ips}")  # Debug log
+        
+        # Direkt IP kontrolü
+        if ip in allowed_ips:
+            print("IP direkt eşleşme bulundu")  # Debug log
+            return True
+            
+        # IP range kontrolü
+        for allowed_ip in allowed_ips:
+            if '*' in allowed_ip:
+                # IP range formatı: 83.7.138.*
+                base_ip = allowed_ip.rsplit('.', 1)[0]  # 83.7.138
+                if ip.startswith(base_ip + '.'):
+                    print(f"IP range eşleşmesi bulundu: {allowed_ip}")  # Debug log
+                    return True
+        
+        print("IP eşleşmesi bulunamadı")  # Debug log
+        return False
+    except Exception as e:
+        print(f"IP kontrolünde hata: {str(e)}")  # Hata logu
+        return False
+
 # Admin IP kontrolü
 def check_admin_ip():
     try:
@@ -166,35 +199,43 @@ def check_admin_ip():
 def limit_admin_access():
     if request.path.startswith(f"/{ADMIN_ROUTE_PREFIX}"):
         try:
-            if not check_admin_ip():
+            if not is_ip_allowed(request.remote_addr):
                 print(f"Erişim reddedildi - IP: {request.remote_addr}")  # Debug log
                 abort(403, description="Bu IP adresinden erişim izniniz yok.")
         except Exception as e:
             print(f"Admin erişim kontrolünde hata: {str(e)}")  # Hata logu
             abort(500, description="Sunucu hatası oluştu.")
 
-# Admin route'ları
-@app.route(f'/{ADMIN_ROUTE_PREFIX}/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")
+def update_allowed_ip(ip_address):
+    """Giriş yapan kullanıcının IP'sini otomatik olarak günceller"""
+    try:
+        # IP zaten var mı kontrol et
+        existing_ip = AllowedIP.query.filter_by(ip_address=ip_address).first()
+        if not existing_ip:
+            # Yeni IP'yi ekle
+            new_ip = AllowedIP(ip_address=ip_address)
+            db.session.add(new_ip)
+            db.session.commit()
+            print(f"Yeni IP eklendi: {ip_address}")
+    except Exception as e:
+        print(f"IP güncelleme hatası: {e}")
+        db.session.rollback()
+
+@app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         
-        admin = Admin.query.filter_by(username=username).first()
-        if admin and admin.check_password(password):
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            # Giriş başarılı, IP'yi güncelle
+            client_ip = request.remote_addr
+            update_allowed_ip(client_ip)
+            
             session['admin_logged_in'] = True
-            session['admin_id'] = admin.id
-            session.permanent = True
-            
-            # Log başarılı giriş
-            print(f"[{datetime.utcnow()}] Başarılı admin girişi - IP: {request.remote_addr}, Kullanıcı: {username}")
-            
-            return redirect(url_for('admin_panel'))
+            return redirect(url_for('admin_dashboard'))
         else:
-            # Log başarısız giriş denemesi
-            print(f"[{datetime.utcnow()}] Başarısız admin girişi - IP: {request.remote_addr}, Kullanıcı: {username}")
-            return render_template('admin_login.html', error='Geçersiz kullanıcı adı veya şifre')
+            flash('Geçersiz kullanıcı adı veya şifre!', 'error')
     
     return render_template('admin_login.html')
 
@@ -485,7 +526,7 @@ def admin_top_voters():
 @admin_required
 def clear_database():
     # Ekstra IP kontrolü
-    if not check_admin_ip():
+    if not is_ip_allowed(request.remote_addr):
         return jsonify({'success': False, 'message': 'Bu IP adresinden silme yetkiniz yok!'}), 403
     try:
         db.session.query(Nomination).delete()

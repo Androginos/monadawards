@@ -11,15 +11,36 @@ def add_allowed_ip():
         AllowedIP.query.delete()
         db.session.commit()
         
-        # Yeni IP'yi ekle
+        # Mevcut IP'yi ekle
         ip = AllowedIP(
-            ip_address='83.7.157.113',
+            ip_address='83.7.138.122',
             description='Admin IP',
             created_at=datetime.utcnow()
         )
         db.session.add(ip)
+        
+        # IP range ekle (83.7.138.*)
+        ip_range = AllowedIP(
+            ip_address='83.7.138.*',
+            description='Admin IP Range',
+            created_at=datetime.utcnow()
+        )
+        db.session.add(ip_range)
+        
         db.session.commit()
-        print("IP adresi başarıyla eklendi!")
+        print("IP ve IP range başarıyla eklendi!")
+
+def add_current_ip():
+    try:
+        # Yeni IP'yi ekle
+        new_ip = AllowedIP(ip_address='83.7.138.122')
+        db.session.add(new_ip)
+        db.session.commit()
+        print("IP başarıyla eklendi!")
+    except Exception as e:
+        print(f"Hata oluştu: {e}")
+        db.session.rollback()
 
 if __name__ == '__main__':
-    add_allowed_ip() 
+    add_allowed_ip()
+    add_current_ip() 
