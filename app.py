@@ -182,34 +182,46 @@ def is_ip_allowed(ip):
 # Admin IP kontrolü
 def check_admin_ip():
     try:
+        # Environment'dan IP'leri al
+        allowed_ips = os.environ.get('ALLOWED_IPS', '127.0.0.1').split(',')
+        allowed_ips = [ip.strip() for ip in allowed_ips]
+        
+        # Gelen IP'yi al
         ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
         if ip_address and ',' in ip_address:
             ip_address = ip_address.split(',')[0].strip()
         
         print(f"Gelen IP adresi: {ip_address}")  # Debug log
+        print(f"İzin verilen IP'ler: {allowed_ips}")  # Debug log
         
-        allowed_ip = AllowedIP.query.filter(
-            AllowedIP.ip_address == ip_address,
-            (AllowedIP.expires_at.is_(None) | (AllowedIP.expires_at > datetime.utcnow()))
-        ).first()
+        # IP kontrolü
+        for allowed_ip in allowed_ips:
+            if '*' in allowed_ip:
+                # IP range kontrolü
+                base_ip = allowed_ip.rsplit('.', 1)[0]
+                if ip_address.startswith(base_ip + '.'):
+                    print(f"IP range eşleşmesi bulundu: {allowed_ip}")
+                    return True
+            elif ip_address == allowed_ip:
+                # Tam IP eşleşmesi
+                print(f"IP eşleşmesi bulundu: {allowed_ip}")
+                return True
         
-        print(f"İzin verilen IP'ler: {[ip.ip_address for ip in AllowedIP.query.all()]}")  # Debug log
-        print(f"IP kontrolü sonucu: {allowed_ip is not None}")  # Debug log
-        
-        return allowed_ip is not None
+        print("IP eşleşmesi bulunamadı")
+        return False
     except Exception as e:
-        print(f"IP kontrolünde hata: {str(e)}")  # Hata logu
+        print(f"IP kontrolünde hata: {str(e)}")
         return False
 
 @app.before_request
 def limit_admin_access():
     if request.path.startswith(f"/{ADMIN_ROUTE_PREFIX}"):
         try:
-            if not is_ip_allowed(request.remote_addr):
-                print(f"Erişim reddedildi - IP: {request.remote_addr}")  # Debug log
+            if not check_admin_ip():
+                print(f"Erişim reddedildi - IP: {request.remote_addr}")
                 abort(403, description="Bu IP adresinden erişim izniniz yok.")
         except Exception as e:
-            print(f"Admin erişim kontrolünde hata: {str(e)}")  # Hata logu
+            print(f"Admin erişim kontrolünde hata: {str(e)}")
             abort(500, description="Sunucu hatası oluştu.")
 
 def update_allowed_ip(ip_address):
