@@ -71,7 +71,7 @@ def create_tables():
     with app.app_context():
         try:
             print("Veritabanı tabloları oluşturuluyor...")  # Debug log
-        db.create_all()
+            db.create_all()
             print("Veritabanı tabloları oluşturuldu.")  # Debug log
             
             # Localhost IP'sini ekle
@@ -242,7 +242,7 @@ def update_allowed_ip(ip_address):
             # Yeni IP'yi ekle
             new_ip = AllowedIP(ip_address=ip_address)
             db.session.add(new_ip)
-        db.session.commit()
+            db.session.commit()
             print(f"Yeni IP eklendi: {ip_address}")
     except Exception as e:
         print(f"IP güncelleme hatası: {e}")
@@ -426,7 +426,7 @@ def add_allowed_ip():
         
         if data.get('expires_at'):
             try:
-            expires_at = datetime.fromisoformat(data['expires_at'])
+                expires_at = datetime.fromisoformat(data['expires_at'])
             except ValueError:
                 return jsonify({'error': 'Geçersiz tarih formatı'}), 400
         
